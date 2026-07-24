@@ -4,7 +4,7 @@
 
 ## Wireframe
 
-Mockup a escala en [`mockup.svg`](./mockup.svg) — abrilo en el navegador.
+**Objetivo visual: [`reference.png`](./reference.png)** (assets reales) · wireframe anotado en [`mockup.svg`](./mockup.svg).
 
 ```
   0                                                                   640

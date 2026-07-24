@@ -2,6 +2,17 @@
 
 **Owner:** Nicolás · **Rama:** `feature/nicolas`
 
+## 🖼️ Imagen de referencia — `reference.png`
+
+**Abrí [`reference.png`](./reference.png) antes de escribir código.** Es el objetivo visual de este spec:
+está compuesta con los assets REALES del juego, en las coordenadas REALES de las constantes de más abajo.
+
+Si estás ejecutando este spec con una IA, **pasale esa imagen junto con el spec.** Los números están
+anotados sobre el dibujo, así que la imagen y el texto no pueden contradecirse.
+
+Muestra el menú con el logo (`logo_cloud_quest.png`), los tres botones (`menu_button.png`) y el fondo,
+más la lista de rutas exactas de cada asset.
+
 ## Introducción
 
 Hoy el juego arranca directo en la pantalla de título dibujada en canvas (`drawTitleScreen`) y la única

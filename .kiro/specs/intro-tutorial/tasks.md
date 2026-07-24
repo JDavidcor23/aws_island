@@ -10,7 +10,7 @@ Marcá cada casilla cuando la termines. Cada tarea referencia el requisito que c
   - `git checkout feature/osvaldo && git pull`
   - `npm run dev` levanta y se juega el combate completo. Si no, avisá en el grupo: no es tu culpa.
   - **Confirmá que Jorge ya cerró el [PASO 0](../PASO-0-DIAZ.md).** Toca `GameEngine.js`, que vos también vas a tocar. Si no está, esperá — no lo hagas vos.
-  - **El arte ya está listo y registrado** — ver la tabla en el `requirements.md`. No tenés que pedir nada.
+  - **El arte ya está hecho** — ver la tabla en el `requirements.md`. No tenés que pedir nada, solo registrarlo (tarea 3).
 
 - [ ] **2. Mapear el terreno (no lo saltees, son 30 min que ahorran horas)**
   - `src/game/GameEngine.js` — `update()` (dónde vas a enganchar), `draw()` y `NO_HUD_STATES`, `handleKeyDown` (cómo se maneja el teclado por fase), `createInitialState()` y `reset()`.
@@ -19,9 +19,10 @@ Marcá cada casilla cuando la termines. Cada tarea referencia el requisito que c
   - `src/game/render/drawScene.js` — cómo dibuja sprites con `Math.round()` y bobbing.
   - `src/constants/LAYOUT.js` — el espacio lógico de 640×360.
 
-- [x] **3. ~~Registrar los assets~~ — ya está hecho**
-  - `ASSETS_MANIFEST.js` ya tiene `islandPath`, `heroSide`, `walk1`..`walk6`, `penguinTalk1` y `penguinTalk2`. **No lo toques.**
-  - Confirmá que la pantalla de título NO muestra ningún aviso `⚠ no cargó:`. Si aparece uno, avisá en el grupo.
+- [ ] **3. Registrar los assets en el manifest**
+  - Agregá a `ASSETS_MANIFEST.js` las claves del diff del `design.md`: `islandPath`, `heroSide`, `walk1`..`walk6`, `penguinTalk1`, `penguinTalk2`.
+  - Los archivos **ya existen** en `public/assets/art/_gameready/`. Lo único que falta es que el manifest los conozca.
+  - Verificá en la pantalla de título que no aparezca ningún aviso `⚠ no cargó:`.
   - _Requisitos: 1.3, 6.5, 6.6_
 
 - [ ] **4. Crear las constantes**

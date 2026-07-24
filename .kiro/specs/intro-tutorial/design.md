@@ -4,35 +4,7 @@
 
 ## Wireframe
 
-Mockup a escala en [`mockup.svg`](./mockup.svg) — abrilo en el navegador.
-
-```
-PASO 1 — WALK_IN (el héroe entra, sin input)
-┌────────────────────────────────────────────────────────────────┐
-│  cielo morado con smog          ░ servidor lejano, humo ░      │
-│     ╱▔▔╲   ┌─┐  ╱▔╲                    ▓▓                     │
-│    casas oxidadas, molino roto, cables saliendo del suelo      │
-│ ═══════════════════════════════════════════════════════════ ←piso 300
-│  🚶→                                            🐧             │
-│  x=-40 → 180                                   x=430           │
-│                                          [T para saltear]      │
-└────────────────────────────────────────────────────────────────┘
-
-PASO 2 — TALK (ESPACIO avanza)              PASO 3 — WALK_OUT (sin input)
-┌────────────────────────────────┐          ┌────────────────────────────────┐
-│  ░ isla oxidada de fondo ░     │          │  ░ isla oxidada de fondo ░     │
-│ ═════════════════════════════  │          │ ═════════════════════════════  │
-│   🧍          🐧               │          │            🚶→                 │
-│  x=180       x=430             │          │        x=180 → 700             │
-│ ┌────────────────────────────┐ │          │                                │
-│ │ MENTOR 🐧                  │ │          │  (sale de pantalla)            │
-│ │ Cuando ataque, elegí la    │ │          │        ↓                       │
-│ │ carta que resuelve ESE     │ │          │   startRound() → COMBATE       │
-│ │ problema. 1-4 o clic.      │ │          └────────────────────────────────┘
-│ │                 ▼ ESPACIO  │ │
-│ └────────────────────────────┘ │
-└────────────────────────────────┘
-```
+**Objetivo visual: [`reference.png`](./reference.png)** — compuesta con los assets reales en las coordenadas reales.
 
 ---
 
@@ -118,19 +90,32 @@ src/constants/INTRO_SCENE.js         # geometría, tiempos y los textos del diá
 
 ---
 
-## ✅ Los assets ya están cargados — y ojo con las escalas
+## Los archivos de arte ya existen — registralos en el manifest
 
-`ASSETS_MANIFEST.js` **ya tiene todas las claves registradas**. No lo toques: están cargadas en
-`engine.IMG` y listas para usar.
+Los PNG están en `public/assets/art/_gameready/`, pero **`ASSETS_MANIFEST.js` todavía no los conoce**, así
+que `engine.IMG` no los tiene. Registrá estas claves (es tu tarea 3):
 
-```js
-IMG.islandPath              // fondo de la escena, 640x360
-IMG.walk1 .. IMG.walk6      // ciclo de caminata, 64x64 cada uno
-IMG.heroSide                // héroe quieto de perfil, 64x64
-IMG.penguinTalk1            // pingüino con la boca abierta, 128x128
-IMG.penguinTalk2            // pingüino con la boca cerrada, 128x128
-IMG.dlg                     // caja de diálogo
+```diff
+ export const ASSETS_MANIFEST = {
+   arena: 'scene_battle_arena.png',
+   after: 'scene_island_after.png',
++  islandPath: 'scene_island_path.png',
+   boss: 'boss_192.png',
+   hero: 'hero_front_128.png',
++  heroSide: 'hero_side_64.png',
++  walk1: 'hero_walk_1.png',
++  walk2: 'hero_walk_2.png',
++  walk3: 'hero_walk_3.png',
++  walk4: 'hero_walk_4.png',
++  walk5: 'hero_walk_5.png',
++  walk6: 'hero_walk_6.png',
+   penguin: 'penguin_64.png',
++  penguinTalk1: 'penguin_talk_1.png',
++  penguinTalk2: 'penguin_talk_2.png',
 ```
+
+> Los 6 frames de caminata **existen desde antes pero nunca estuvieron en el manifest**: si los dibujás sin
+> registrarlos no vas a ver nada, y tampoco vas a tener ningún error que te avise.
 
 **Dibujá siempre en resolución nativa o en un múltiplo exacto.** El pixel art escalado por un factor
 fraccionario queda con píxeles de distinto tamaño y se nota muchísimo:

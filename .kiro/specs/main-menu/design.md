@@ -4,7 +4,7 @@
 
 ## Wireframe
 
-Mockup a escala en [`mockup.svg`](./mockup.svg) — abrilo en el navegador.
+**Objetivo visual: [`reference.png`](./reference.png)** (assets reales) · wireframe anotado en [`mockup.svg`](./mockup.svg).
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -57,8 +57,9 @@ Por qué: el menú no necesita nada del motor del juego, y dibujarlo en canvas t
 `drawScreens.js` (archivo compartido) y a pelearte con coordenadas de 640×360 y `drawTextOutlined`.
 En DOM lo resolvés con CSS, en carpeta propia, sin riesgo de romper el combate.
 
-**Consecuencia:** `App.jsx` decide qué se muestra con un `useState` local. No hace falta Zustand.
-Zustand está en el `package.json` pero **nadie lo usa todavía** — no lo estrenes acá, no lo necesitás.
+**Consecuencia:** `App.jsx` decide qué se muestra con un `useState` local. **No metas esto en Zustand.**
+El store (`useGameStore.store.js`) existe y lo usa el motor para sus eventos discretos, pero "¿el menú está
+visible?" es estado local de `App`: si lo subís al store global, acoplás tu feature con el de los otros dos.
 
 ```
 App.jsx
@@ -114,8 +115,8 @@ export const App = () => {
 }
 ```
 
-**La prop `initialState` ya existe:** Jorge la agregó en el [PASO 0](../PASO-0-DIAZ.md) (parches 2 y 4).
-Verificá antes de arrancar que `src/game/GameEngine.js` tenga `this.initialState` en el constructor.
+**La prop `initialState` sale del [PASO 0](../PASO-0-DIAZ.md)** (parches 2 y 4), que hace Jorge antes de
+repartir las ramas. Verificá que `src/game/GameEngine.js` tenga `this.initialState` en el constructor.
 Si no está, **no la implementes vos** — son archivos del motor y te pondrías en colisión con los otros dos
 features. Avisá en el grupo y mientras tanto trabajá con `<BattlePage />` pelado: tu feature se valida
 igual, solo vas a ver la pantalla de título del canvas después del menú.

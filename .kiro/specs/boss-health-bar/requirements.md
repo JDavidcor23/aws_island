@@ -2,6 +2,17 @@
 
 **Owner:** Jennifer · **Rama:** `feature/jennifer`
 
+## 🖼️ Imagen de referencia — `reference.png`
+
+**Abrí [`reference.png`](./reference.png) antes de escribir código.** Es el objetivo visual de este spec:
+está compuesta con los assets REALES del juego, en las coordenadas REALES de las constantes de más abajo.
+
+Si estás ejecutando este spec con una IA, **pasale esa imagen junto con el spec.** Los números están
+anotados sobre el dibujo, así que la imagen y el texto no pueden contradecirse.
+
+Muestra la barra en contexto sobre la cabeza del jefe con el marco real (`boss_bar_frame.png`), y abajo
+los 5 valores que puede tomar (100 / 75 / 50 / 25 / 0 %) con el relleno dibujado DEBAJO del marco.
+
 ## Introducción
 
 Hoy el jugador ve sus 4 corazones y su barra especial, pero **el jefe no tiene ninguna representación

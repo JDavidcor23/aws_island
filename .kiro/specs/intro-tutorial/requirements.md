@@ -2,6 +2,22 @@
 
 **Owner:** Osvaldo · **Rama:** `feature/osvaldo`
 
+## 🖼️ Imagen de referencia — `reference.png`
+
+**Abrí [`reference.png`](./reference.png) antes de escribir código.** Es el objetivo visual de este spec:
+está compuesta con los assets REALES del juego, en las coordenadas REALES de las constantes de más abajo.
+
+Si estás ejecutando este spec con una IA, **pasale esa imagen junto con el spec.** Los números están
+anotados sobre el dibujo, así que la imagen y el texto no pueden contradecirse.
+
+Muestra los 3 pasos de la escena (`WALK_IN`, `TALK`, `WALK_OUT`) con el fondo real, el héroe, el pingüino
+y la caja de diálogo, más la tabla de escalas.
+
+> ⚠️ **La composición necesita una pasada visual.** En el paso `TALK` se ve que la caja de diálogo tapa
+> buena parte de los personajes, y el pingüino queda casi tan alto como el héroe. Eso se corrige moviendo
+> tres constantes — `GROUND_Y`, `PENGUIN_SIZE` y `HERO_MEET_X` — y es la **tarea 13** de `tasks.md`.
+> No hace falta tocar nada más.
+
 ## Introducción
 
 Hoy el jugador aprende las mecánicas **perdiendo corazones**: entra al combate sin saber que hay que elegir
@@ -16,18 +32,18 @@ después el héroe sigue caminando hacia el servidor. Recién ahí arranca el co
 (`scene_island_path.png`), un camino a nivel de suelo con la isla oxidada de fondo y el servidor todavía
 lejos, en el horizonte. No es la arena del combate.
 
-## ✅ El arte ya está listo
+## ✅ El arte ya está hecho
 
-Todos los assets que necesitás están en `public/assets/art/_gameready/` y **ya registrados** en
-`src/constants/ASSETS_MANIFEST.js`. No tenés que pedir nada ni tocar el manifest:
+Todos los archivos que necesitás están en `public/assets/art/_gameready/`. **No tenés que pedir arte a
+nadie** — solo registrarlos en `ASSETS_MANIFEST.js` (tu tarea 3) para que el motor los cargue:
 
-| Clave en `engine.IMG` | Archivo | Qué es |
+| Clave a registrar | Archivo | Qué es |
 |---|---|---|
 | `islandPath` | `scene_island_path.png` | el fondo de la escena, 640×360 |
 | `walk1` … `walk6` | `hero_walk_1..6.png` | ciclo de caminata, 64×64 |
 | `heroSide` | `hero_side_64.png` | héroe quieto de perfil, 64×64 |
 | `penguinTalk1` / `penguinTalk2` | `penguin_talk_1..2.png` | pingüino hablando, 2 frames de 128×128 |
-| `dlg` | `dialogue_box.png` | la caja de diálogo que ya usa el juego |
+| `dlg` | `dialogue_box.png` | la caja de diálogo — **ya está registrada** |
 
 Los dos frames del pingüino tienen los pies **exactamente en la misma fila** (`y=127` en ambos), así que
 alternarlos no lo hace saltar.
