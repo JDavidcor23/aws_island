@@ -118,32 +118,31 @@ src/constants/INTRO_SCENE.js         # geometría, tiempos y los textos del diá
 
 ---
 
-## 🔴 Los 6 frames de caminata NO se están cargando
+## ✅ Los assets ya están cargados — y ojo con las escalas
 
-Los archivos existen en `public/assets/art/_gameready/hero_walk_1.png` … `hero_walk_6.png`, pero
-**no están en `ASSETS_MANIFEST.js`**, así que `engine.IMG` no los tiene. Si intentás dibujarlos sin
-registrarlos, no vas a ver nada y no vas a tener ningún error.
+`ASSETS_MANIFEST.js` **ya tiene todas las claves registradas**. No lo toques: están cargadas en
+`engine.IMG` y listas para usar.
 
-```diff
- export const ASSETS_MANIFEST = {
-   arena: 'scene_battle_arena.png',
-   after: 'scene_island_after.png',
-+  islandPath: 'scene_island_path.png',   // ← asset A-1, lo genera Jorge
-   boss: 'boss_192.png',
-   hero: 'hero_front_128.png',
-+  heroSide: 'hero_side_128.png',
-+  walk1: 'hero_walk_1.png',
-+  walk2: 'hero_walk_2.png',
-+  walk3: 'hero_walk_3.png',
-+  walk4: 'hero_walk_4.png',
-+  walk5: 'hero_walk_5.png',
-+  walk6: 'hero_walk_6.png',
-   penguin: 'penguin_64.png',
+```js
+IMG.islandPath              // fondo de la escena, 640x360
+IMG.walk1 .. IMG.walk6      // ciclo de caminata, 64x64 cada uno
+IMG.heroSide                // héroe quieto de perfil, 64x64
+IMG.penguinTalk1            // pingüino con la boca abierta, 128x128
+IMG.penguinTalk2            // pingüino con la boca cerrada, 128x128
+IMG.dlg                     // caja de diálogo
 ```
 
-> El manifest se carga entero al arrancar. Si una clave apunta a un archivo que no existe, **el juego no
-> explota**: entra en `engine.loadErrors`. Por eso podés registrar `islandPath` antes de que A-1 esté listo
-> y desarrollar con el fallback de color plano.
+**Dibujá siempre en resolución nativa o en un múltiplo exacto.** El pixel art escalado por un factor
+fraccionario queda con píxeles de distinto tamaño y se nota muchísimo:
+
+| Sprite | Fuente | Dibujá a | Factor |
+|---|---|---|---|
+| `walk1..6`, `heroSide` | 64px | **64** (`HERO_SIZE`) | 1:1 ✅ |
+| `penguinTalk1/2` | 128px | **64** (`PENGUIN_SIZE`) | 0.5x exacto ✅ |
+
+> ❌ No los dibujes a 96px. `64 → 96` es 1.5x: la mitad de los píxeles quedan de 1 unidad y la otra mitad
+> de 2. Y además, contra la casa del fondo (que mide ~155px en el escenario), un héroe de 96 se ve gigante.
+> A 64 la proporción es correcta.
 
 ---
 
@@ -171,19 +170,18 @@ export const INTRO_SCENE = {
   },
 
   // geometría en el espacio lógico del canvas (640x360)
-  GROUND_Y: 300,        // línea de piso: los PIES del sprite se apoyan acá
-  HERO_SIZE: 96,
-  HERO_MEET_X: 180,     // dónde se detiene el héroe a hablar
+  GROUND_Y: 295,        // línea de piso: los PIES del sprite se apoyan acá
+  HERO_SIZE: 64,        // resolución NATIVA de walk1..6 y heroSide -> escala 1:1
+  HERO_MEET_X: 150,     // dónde se detiene el héroe a hablar
   HERO_EXIT_X: 700,     // fuera del borde derecho (LAYOUT.W = 640)
-  PENGUIN_X: 430,
-  PENGUIN_SIZE: 72,
+  PENGUIN_X: 250,
+  PENGUIN_SIZE: 64,     // penguinTalk1/2 son 128px -> 0.5x exacto, sin artefactos
 
-  WALK_SPEED: 92,       // px por segundo
+  WALK_SPEED: 78,       // px por segundo
   WALK_FRAME_DURATION: 0.1,   // segundos por frame -> 10 fps
   WALK_FRAME_COUNT: 6,
 
-  PENGUIN_BOB_FREQ: 5,  // el pingüino "habla": oscila mientras dura el diálogo
-  PENGUIN_BOB_AMP: 3,
+  PENGUIN_TALK_FRAME_DURATION: 0.18,   // alterna penguinTalk1 / penguinTalk2
 
   SKIP_KEY: 't',
   SKIP_HINT: 'T para saltear',
@@ -284,11 +282,38 @@ Orden de dibujado (es canvas: lo último tapa lo anterior):
 
 ```
 1. fondo               IMG.islandPath, o fillRect con FALLBACK_BG si no cargó
-2. pingüino            en PENGUIN_X, con el bob si step === TALK
+2. pingüino            en PENGUIN_X, alternando penguinTalk1/2 si step === TALK
 3. héroe               frame de caminata si camina, heroSide si está quieto
 4. hint de saltear     drawTextOutlined, esquina que no tape nada
 5. caja de diálogo     solo si step === TALK
 ```
+
+**Los dos sprites se anclan por los pies, no por el centro:**
+
+```js
+const drawGrounded = (ctx, img, centerX, size) => {
+  ctx.drawImage(
+    img,
+    Math.round(centerX - size / 2),
+    Math.round(INTRO_SCENE.GROUND_Y - size),   // ← la esquina superior, no el centro
+    size,
+    size,
+  )
+}
+```
+
+Si copiás el patrón de `drawScene.js` (que centra en `y`), los personajes van a flotar medio cuerpo
+por encima del piso.
+
+**El pingüino hablando** alterna sus dos frames con `G.time`, igual que el blink de `¡MAX!` en `drawHUD.js`:
+
+```js
+const talking = intro.step === INTRO_STEPS.TALK
+const mouthOpen = Math.floor(G.time / INTRO_SCENE.PENGUIN_TALK_FRAME_DURATION) % 2 === 0
+const penguinImg = talking && mouthOpen ? IMG.penguinTalk1 : IMG.penguinTalk2
+```
+
+Fuera de `TALK` queda siempre en `penguinTalk2` (boca cerrada), que cumple el Requisito 2.7.
 
 Herramientas que **ya existen** y tenés que reusar en vez de reescribir:
 

@@ -166,6 +166,9 @@ export const BOSS_HEALTH = {
 
   LABEL: 'LEGACY SERVER',
 
+  // fracción del ancho/alto del PNG donde va el gauge, dentro del marco
+  INNER: { x0: 0.075, x1: 0.925, y0: 0.30, y1: 0.70 },
+
   COLORS: {
     frame: '#3d4763',
     empty: 'rgba(8,10,28,0.82)',
@@ -247,8 +250,50 @@ divisores (3 líneas verticales de 1px que parten el ancho en 4 segmentos)
 
 ---
 
-## Opcional, solo si te sobra tiempo (avisá antes)
+## El marco pixel art ya existe: `IMG.bossBar`
 
-Un marco pixel art para la barra en vez de rectángulos. **No lo hagas por tu cuenta**: el pipeline de
-generación de assets lo maneja Jorge (`CLOUD_QUEST.md` §12). Si querés proponerlo, pedilo en el grupo.
-La versión con rectángulos es la entregable y tiene que quedar bien por sí sola.
+`boss_bar_frame.png` está generado (208×20, exactamente el tamaño de `BOSS_HEALTH.w` × `.h`) y **ya
+registrado** en `ASSETS_MANIFEST.js` con la clave `bossBar`. No tenés que tocar el manifest.
+
+Es un marco de metal oxidado con remaches, un LED rojo en la punta izquierda y **los 3 divisores ya
+dibujados** que parten el interior en 4 segmentos. El centro es transparente: **el relleno lo pintás vos
+por código, debajo del marco.**
+
+Eso cambia el orden de dibujado:
+
+```
+1. rótulo LEGACY SERVER
+2. fondo vacío         rect del color `empty`, en el área interna
+3. relleno             rect de ancho = interior * bossHpDisplay
+4. el marco encima     ctx.drawImage(IMG.bossBar, x, y, w, h)   ← tapa los bordes del relleno
+```
+
+**El relleno va DEBAJO del marco, no encima.** Si lo dibujás después, le tapás los remaches y los
+divisores, y se pierde todo el detalle del asset.
+
+Como el marco ya trae los divisores, **no los dibujes vos**: te quedarían dobles.
+
+### Mantené el fallback
+
+```js
+if (IMG.bossBar) {
+  ctx.drawImage(IMG.bossBar, x, y, w, h)
+} else {
+  // marco dibujado con rects (el diseño original)
+}
+```
+
+Dos razones: si el archivo se corrompe o alguien lo renombra, la barra sigue funcionando; y te deja
+comparar las dos versiones para confirmar que el asset mejora las cosas y no las empeora.
+
+### El área interna
+
+El PNG tiene el marco pegado a los bordes, así que el área rellenable es el rectángulo interior. Empezá
+con estos valores y **ajustalos mirándolo corriendo** — están en `BOSS_HEALTH.js`:
+
+```js
+// fracción del ancho/alto total donde va el gauge, dentro del PNG
+INNER: { x0: 0.075, x1: 0.925, y0: 0.30, y1: 0.70 },
+```
+
+Si el relleno se asoma por fuera del marco, subí `x0` / `y0` y bajá `x1` / `y1`.

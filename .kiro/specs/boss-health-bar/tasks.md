@@ -23,7 +23,8 @@ Marcá cada casilla cuando la termines. Cada tarea referencia el requisito que c
 
 - [ ] **4. Dibujar la barra estática al 100%**
   - Creá `src/game/render/drawBossHealth.js` con la firma `(engine) => {}`.
-  - Dibujá rótulo + marco + fondo vacío + relleno al 100% + los 3 divisores.
+  - Dibujá rótulo → fondo vacío → relleno al 100% → **el marco `IMG.bossBar` encima** (con fallback a rects si no cargó).
+  - **No dibujes los divisores:** el PNG ya los trae. Si los agregás, quedan dobles.
   - Enganchá el import y la llamada en `drawHUD.js` (2 líneas).
   - `Math.round()` en todas las coordenadas de `fillRect`.
   - Confirmá visualmente que no tapa corazones, especial, indicador de ronda ni diálogos.
@@ -44,6 +45,10 @@ Marcá cada casilla cuando la termines. Cada tarea referencia el requisito que c
   - Init perezoso de `G.bossHpDisplay` y lerp hacia `targetHp` con `BOSS_HEALTH.LERP`.
   - **NO uses una variable de módulo** (`let displayed = 1` arriba del archivo). Releé el `design.md`, sección "La animación", punto 2, para entender por qué eso rompe el reinicio.
   - _Requisitos: 1.5, 5.1, 5.2_
+
+- [ ] **7b. Ajustar el área interna del marco**
+  - Mirá si el relleno se asoma por fuera del marco. Si sí, corregí `BOSS_HEALTH.INNER` (`x0`/`x1`/`y0`/`y1`).
+  - _Requisito: 1.1_
 
 - [ ] **8. Pulso en el mínimo**
   - Cuando `bossHpDisplay <= PULSE_THRESHOLD`, alterná el color del relleno usando `G.time` y `PULSE_FREQ`.

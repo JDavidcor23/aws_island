@@ -168,7 +168,13 @@ export const CREDITS = {
   TEAM: ['Jorge', 'Nicolás', 'Jennifer', 'Osvaldo'],
 }
 
-export const MENU_BACKGROUND = '/assets/art/_gameready/scene_island_before.png'
+// Los assets se sirven desde public/, así que las rutas empiezan en /assets/...
+// NO los importes con `import`: son archivos estáticos, no módulos.
+export const MENU_ASSETS = {
+  BACKGROUND: '/assets/art/_gameready/scene_island_before.png',
+  LOGO: '/assets/art/_gameready/logo_cloud_quest.png',   // 400x214
+  BUTTON: '/assets/art/_gameready/menu_button.png',      // 240x44
+}
 
 export const MENU_KEYS = {
   UP: 'ArrowUp',
@@ -179,7 +185,35 @@ export const MENU_KEYS = {
 }
 ```
 
-> El fondo se sirve desde `public/`, así que la ruta empieza en `/assets/...`. **No** lo importes con `import`.
+### Ya tenés logo y botón como imágenes
+
+**Usá `MENU_ASSETS.LOGO` en vez de escribir "CLOUD QUEST" como texto.** Es un logo pixel art de 400×214
+con las nubes dentro de las letras — se ve muchísimo mejor que texto con contorno.
+
+```jsx
+<img className="main-menu__logo" src={MENU_ASSETS.LOGO} alt={MENU_TEXTS.TITLE} />
+```
+
+El `alt` con el título de verdad: es una imagen que transmite información, no decoración.
+
+**`MENU_ASSETS.BUTTON`** es el marco de 240×44 para las opciones. Va como `background-image` del `<button>`,
+con el texto encima:
+
+```css
+.main-menu__option {
+  background-image: url('/assets/art/_gameready/menu_button.png');
+  background-size: 100% 100%;
+  image-rendering: pixelated;   /* ← sin esto se ve borroneado */
+  width: 240px;
+  height: 44px;
+}
+```
+
+> ⚠️ **`image-rendering: pixelated` en TODAS las imágenes pixel art**: el fondo, el logo y el botón.
+> Sin eso el navegador las suaviza al escalarlas y arruina el estilo. Es el error más visible de este feature.
+>
+> Si el botón te queda incómodo de estilar, podés resolverlo con CSS puro (borde + fondo de la paleta) y
+> dejar el PNG de lado. El logo sí usalo: ahí la diferencia es grande.
 
 ---
 

@@ -1,6 +1,9 @@
-# Assets faltantes — prompts para generar
+# Assets — estado y prompts de generación
 
 **Owner: Jorge.** Nadie más genera arte. Los specs referencian estos assets por número (`A-1`, `A-2`…).
+
+**Los cinco ya están generados, post-procesados y registrados.** Este documento queda como registro
+reproducible del pipeline.
 
 ## Pipeline
 
@@ -10,9 +13,28 @@ codex exec --sandbox danger-full-access -m gpt-5.5 -- "<prompt>" < /dev/null
 
 > El `< /dev/null` es **obligatorio** o codex se cuelga esperando stdin.
 
-Post-proceso (`scratchpad/*.py`): chroma key (quitar fondo) → recorte a contenido → fit → downscale →
-quantize a 16 colores. **Gotcha conocido:** algunas imágenes de Codex vienen con fondo **verde** en vez de
-transparente → hay que aplicar el chroma key.
+**Pedile fondo verde puro (RGB 0,255,0), no transparente.** Es más confiable que pedir alfa, y el chroma
+key lo resuelve después. Los fondos de escena van sin chroma.
+
+Post-proceso — los scripts **viven en el repo**, en `scripts/`:
+
+```bash
+# fondo de escena: resize + quantize
+python scripts/postprocess.py in.png out.png --size 640x360 --colors 48
+
+# sprite o UI con fondo verde: chroma key + recorte + resize + quantize
+python scripts/postprocess.py in.png out.png --size 240x44 --colors 16 --chroma --trim --no-aspect
+
+# sprite sheet horizontal, con baseline COMPARTIDA entre frames
+python scripts/split_sheet.py sheet.png out_prefix --frames 2 --size 128x128 --chroma
+```
+
+`--no-aspect` estira al tamaño exacto (para marcos de UI). Sin él, encaja sin deformar y centra.
+
+> ⚠️ **`split_sheet.py` existe por una razón concreta:** si recortás cada frame de un sheet por separado, el
+> frame con la aleta levantada tiene otro bounding box, se escala distinto, y **los pies quedan a distinta
+> altura** — el sprite salta al alternar frames. El script calcula la unión de los bounding boxes y recorta
+> todos con la misma ventana, anclando por abajo.
 
 Destino final: `public/assets/art/_gameready/` y registrar la clave en `src/constants/ASSETS_MANIFEST.js`.
 
@@ -24,22 +46,31 @@ tóxico en la zona del servidor. **El contraste ES la narrativa: mundo vivo vs. 
 
 ---
 
-## Estado
+## Estado — ✅ TODO GENERADO
 
-| # | Asset | Para | Prioridad |
-|---|---|---|---|
-| **A-1** | Fondo de la escena de tutorial (nivel de suelo) | `intro-tutorial` | 🔴 **BLOQUEANTE** |
-| **A-2** | Marco de la barra de vida del jefe | `boss-health-bar` | 🟡 opcional |
-| **A-3** | Logo "CLOUD QUEST" | `main-menu` | 🟡 opcional |
-| **A-4** | Pingüino hablando (2 poses) | `intro-tutorial` | 🟢 nice to have |
-| **A-5** | Marco de botón del menú | `main-menu` | 🟢 nice to have |
+Los cinco assets están en `public/assets/art/_gameready/` y **registrados** en
+`src/constants/ASSETS_MANIFEST.js`. Los tres specs se pueden ejecutar sin esperar arte.
 
-**Solo A-1 es bloqueante.** Los otros cuatro tienen fallback que ya funciona: la barra del jefe se dibuja
-con rectángulos, el logo es texto con contorno, y el pingüino actual sirve para el diálogo.
+| # | Asset | Archivo | Tamaño | Clave | Para |
+|---|---|---|---|---|---|
+| **A-1** | Fondo de la escena de tutorial | `scene_island_path.png` | 640×360 | `islandPath` | `intro-tutorial` |
+| **A-2** | Marco de la barra del jefe | `boss_bar_frame.png` | 208×20 | `bossBar` | `boss-health-bar` |
+| **A-3** | Logo CLOUD QUEST | `logo_cloud_quest.png` | 400×214 | `logo` | `main-menu` |
+| **A-4** | Pingüino hablando | `penguin_talk_1.png` · `penguin_talk_2.png` | 128×128 | `penguinTalk1` · `penguinTalk2` | `intro-tutorial` |
+| **A-5** | Marco de botón del menú | `menu_button.png` | 240×44 | `menuButton` | `main-menu` |
+
+Además se registraron los 6 frames de caminata (`walk1`..`walk6`) y `heroSide`, que **existían como
+archivos pero no estaban en el manifest**, así que no se cargaban.
+
+Verificado: cero píxeles verdes residuales tras el chroma key, y los dos frames del pingüino tienen los
+pies en la misma fila (`y=127`) para que no salte al alternarlos.
+
+Cada asset conserva abajo su prompt y su comando de post-proceso, **tal cual se usaron**. Si hay que
+regenerar alguno, es copiar y pegar.
 
 ---
 
-## 🔴 A-1 · Fondo de la escena de tutorial — `scene_island_path.png`
+## A-1 · Fondo de la escena de tutorial — `scene_island_path.png`
 
 **Por qué hace falta.** Ninguno de los dos fondos que ya tenés sirve para una escena caminable:
 
@@ -75,7 +106,7 @@ looming in the foreground. No characters, no text, no UI.
 **Verificación antes de aceptarla:**
 
 - [ ] Hay una **línea de piso plana y clara** en el tercio inferior, sin obstáculos que estorben.
-- [ ] Un sprite de 96px parado en el camino se ve **proporcionado** con las casas del midground.
+- [x] Un sprite de 64px parado en el camino se ve **proporcionado** con las casas del midground (a 96 quedaba gigante: la casa mide ~155px en el escenario).
 - [ ] El servidor se lee **lejano, en el horizonte** — no ocupando media pantalla como en la arena.
 - [ ] Se nota que **todo** está viejo y oxidado. Acá no hay contraste vivo/muerto: eso es el par
       `island_before` / `island_after`.
@@ -84,13 +115,10 @@ looming in the foreground. No characters, no text, no UI.
 
 ---
 
-## 🟡 A-2 · Marco de la barra de vida del jefe — `boss_bar_frame.png`
-
-**Fallback actual:** `drawBossHealth.js` la dibuja con rectángulos de la paleta. Funciona y es lo entregable.
-Este asset la sube de nivel, no la habilita.
+## A-2 · Marco de la barra de vida del jefe — `boss_bar_frame.png`
 
 **Clave en el manifest:** `bossBar`
-**Tamaño final:** 208×20 (el gauge interno va de 155/208 a 965/1000 del ancho — ver `BOSS_HEALTH.js`)
+**Tamaño final:** 208×20 (el área rellenable va en `BOSS_HEALTH.INNER`)
 
 ```
 Pixel art UI element, horizontal health bar frame for a video game boss, 208x20
@@ -112,15 +140,13 @@ in the rust and dark steel range (#3d4763, #4a4038, #5c5145). No text, no number
 
 ---
 
-## 🟡 A-3 · Logo del título — `logo_cloud_quest.png`
-
-**Fallback actual:** texto `CLOUD QUEST` con `drawTextOutlined` en `#7de0ff`. Legible pero genérico.
+## A-3 · Logo del título — `logo_cloud_quest.png`
 
 **Clave en el manifest:** `logo`
-**Tamaño final:** 420×120
+**Tamaño final:** 400×214 (el logo salió 1.875:1, no 3.5:1 como estimé antes de verlo)
 
 ```
-Pixel art game logo, the words "CLOUD QUEST" on two lines, 420x120 pixels,
+Pixel art game logo, the words "CLOUD QUEST" on two lines,
 transparent background. Chunky bold pixel letterforms with a thick dark outline and
 a subtle 3D bevel. The word CLOUD is rendered in soft cyan-white cloud tones with
 puffy cloud shapes integrated into the letters; the word QUEST is in warm golden
@@ -139,9 +165,7 @@ background, no frame, no tagline, no extra text beyond CLOUD QUEST.
 
 ---
 
-## 🟢 A-4 · Pingüino hablando — `penguin_talk_1.png`, `penguin_talk_2.png`
-
-**Fallback actual:** `penguin_128.png` estático. Sirve perfectamente.
+## A-4 · Pingüino hablando — `penguin_talk_1.png`, `penguin_talk_2.png`
 
 Dos frames para alternar mientras el pingüino habla — le da mucha vida a la escena de tutorial por muy
 poco costo.
@@ -166,9 +190,7 @@ background, no shadow, no text.
 
 ---
 
-## 🟢 A-5 · Marco de botón del menú — `menu_button.png`
-
-**Fallback actual:** CSS puro (borde + fondo de la paleta). Se ve bien y es más flexible.
+## A-5 · Marco de botón del menú — `menu_button.png`
 
 Solo vale la pena si el menú termina muy pelado. **Consultalo antes de generarlo.**
 

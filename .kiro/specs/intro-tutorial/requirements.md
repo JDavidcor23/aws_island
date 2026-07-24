@@ -16,14 +16,21 @@ después el héroe sigue caminando hacia el servidor. Recién ahí arranca el co
 (`scene_island_path.png`), un camino a nivel de suelo con la isla oxidada de fondo y el servidor todavía
 lejos, en el horizonte. No es la arena del combate.
 
-## ⚠️ Dependencia bloqueante
+## ✅ El arte ya está listo
 
-Este feature **necesita el asset A-1**, que todavía no existe. Lo genera Jorge — ver
-[`../ASSETS.md`](../ASSETS.md).
+Todos los assets que necesitás están en `public/assets/art/_gameready/` y **ya registrados** en
+`src/constants/ASSETS_MANIFEST.js`. No tenés que pedir nada ni tocar el manifest:
 
-**Podés arrancar sin él:** el fondo se dibuja con un color plano de la paleta hasta que A-1 esté listo. Todo
-lo demás (caminata, diálogo, transición) se desarrolla y se prueba igual. Pero **no se da por terminado**
-hasta que el fondo real esté integrado.
+| Clave en `engine.IMG` | Archivo | Qué es |
+|---|---|---|
+| `islandPath` | `scene_island_path.png` | el fondo de la escena, 640×360 |
+| `walk1` … `walk6` | `hero_walk_1..6.png` | ciclo de caminata, 64×64 |
+| `heroSide` | `hero_side_64.png` | héroe quieto de perfil, 64×64 |
+| `penguinTalk1` / `penguinTalk2` | `penguin_talk_1..2.png` | pingüino hablando, 2 frames de 128×128 |
+| `dlg` | `dialogue_box.png` | la caja de diálogo que ya usa el juego |
+
+Los dos frames del pingüino tienen los pies **exactamente en la misma fila** (`y=127` en ambos), así que
+alternarlos no lo hace saltar.
 
 ## ⚠️ El tutorial NO le pide al jugador que aprenda a caminar
 
@@ -66,7 +73,8 @@ animación, no con input.
 3. WHILE el diálogo está activo THE SYSTEM SHALL recorrer, en orden, líneas que cubran las tres cosas que el jugador necesita saber: **(a)** que el Legacy Server ya no da abasto y hay que enfrentarlo, **(b)** que a cada problema se responde eligiendo la característica de la nube que lo resuelve, con `1-4` o clic, y **(c)** que el ataque se bloquea apretando `ESPACIO` en el momento justo, y que más precisión carga más el especial.
 4. WHEN el jugador presiona `ESPACIO` THEN el sistema SHALL avanzar a la línea siguiente.
 5. WHILE el diálogo está activo THE SYSTEM SHALL mostrar el indicador de "continuar" parpadeante que ya usa el juego.
-6. WHILE el pingüino habla THE SYSTEM SHALL animarlo de alguna forma perceptible, para que la escena no se sienta congelada.
+6. WHILE el pingüino habla THE SYSTEM SHALL alternar sus dos frames (`penguinTalk1` y `penguinTalk2`) a intervalo constante, para que se vea hablando y la escena no se sienta congelada.
+7. WHEN el diálogo termina THEN el sistema SHALL dejar al pingüino en el frame de boca cerrada (`penguinTalk2`).
 
 ## Requisito 3 — El héroe se va y arranca el combate
 
@@ -111,6 +119,7 @@ animación, no con input.
 4. WHILE la escena está activa THE SYSTEM SHALL NO dibujar el HUD de combate (corazones, especial, indicador de ronda).
 5. IF el fondo de la escena no está cargado THEN el sistema SHALL dibujar un color plano de la paleta y seguir funcionando.
 6. IF los frames de caminata no están cargados THEN el sistema SHALL usar el sprite quieto y seguir funcionando.
+7. WHEN se dibuja cualquier sprite THEN el sistema SHALL usar su resolución nativa o un múltiplo exacto (los frames de caminata a 64, el pingüino a 64 desde su fuente de 128), para no generar píxeles desparejos.
 
 ---
 

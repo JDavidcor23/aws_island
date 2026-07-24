@@ -10,7 +10,7 @@ Marcá cada casilla cuando la termines. Cada tarea referencia el requisito que c
   - `git checkout feature/osvaldo && git pull`
   - `npm run dev` levanta y se juega el combate completo. Si no, avisá en el grupo: no es tu culpa.
   - **Confirmá que Jorge ya cerró el [PASO 0](../PASO-0-DIAZ.md).** Toca `GameEngine.js`, que vos también vas a tocar. Si no está, esperá — no lo hagas vos.
-  - **Pedí el estado del asset [A-1](../ASSETS.md)** en el grupo. Si no está listo, arrancás igual con el fallback de color plano.
+  - **El arte ya está listo y registrado** — ver la tabla en el `requirements.md`. No tenés que pedir nada.
 
 - [ ] **2. Mapear el terreno (no lo saltees, son 30 min que ahorran horas)**
   - `src/game/GameEngine.js` — `update()` (dónde vas a enganchar), `draw()` y `NO_HUD_STATES`, `handleKeyDown` (cómo se maneja el teclado por fase), `createInitialState()` y `reset()`.
@@ -19,10 +19,9 @@ Marcá cada casilla cuando la termines. Cada tarea referencia el requisito que c
   - `src/game/render/drawScene.js` — cómo dibuja sprites con `Math.round()` y bobbing.
   - `src/constants/LAYOUT.js` — el espacio lógico de 640×360.
 
-- [ ] **3. Registrar los assets**
-  - En `ASSETS_MANIFEST.js`: `islandPath`, `heroSide` y `walk1`..`walk6`, con el diff del `design.md`.
-  - **Los 6 frames de caminata existen como archivos pero NO estaban en el manifest**, así que `engine.IMG` no los tenía. Sin este paso no vas a ver nada y no vas a tener ningún error.
-  - Verificá en la pantalla de título: si A-1 todavía no existe, va a aparecer el aviso `⚠ no cargó: islandPath`. Eso está **bien**, es el comportamiento esperado.
+- [x] **3. ~~Registrar los assets~~ — ya está hecho**
+  - `ASSETS_MANIFEST.js` ya tiene `islandPath`, `heroSide`, `walk1`..`walk6`, `penguinTalk1` y `penguinTalk2`. **No lo toques.**
+  - Confirmá que la pantalla de título NO muestra ningún aviso `⚠ no cargó:`. Si aparece uno, avisá en el grupo.
   - _Requisitos: 1.3, 6.5, 6.6_
 
 - [ ] **4. Crear las constantes**
@@ -34,7 +33,8 @@ Marcá cada casilla cuando la termines. Cada tarea referencia el requisito que c
   - Creá `src/game/render/drawIntroScene.js` con firma `(engine) => {}`.
   - Fondo (o `FALLBACK_BG`), pingüino en `PENGUIN_X`, héroe quieto en `HERO_MEET_X`, hint de saltear.
   - Enganchá `SCREEN_DRAWERS[INTRO]` a tu drawer y **borrá** `drawIntroScreen` y `drawPenguin` si quedan sin uso.
-  - 🔴 **Los pies apoyados en el piso:** la esquina superior del sprite va en `GROUND_Y - HERO_SIZE`, no centrada. Si lo dibujás centrado como el héroe de batalla, va a flotar.
+  - 🔴 **Los pies apoyados en el piso:** la esquina superior del sprite va en `GROUND_Y - HERO_SIZE`, no centrada. Si copiás el patrón de `drawScene.js` (que centra en `y`), los personajes flotan medio cuerpo. Usá el helper `drawGrounded` del `design.md`.
+  - 🔴 **Escalas nativas:** héroe a 64 (1:1), pingüino a 64 (0.5x desde 128). Nunca a 96 — es 1.5x y deja píxeles desparejos.
   - `Math.round()` en todas las coordenadas.
   - _Requisitos: 1.1, 1.5, 2.1, 4.1, 6.5_
 
@@ -60,10 +60,11 @@ Marcá cada casilla cuando la termines. Cada tarea referencia el requisito que c
   - `sfxService.confirm()` al avanzar.
   - _Requisitos: 2.2, 2.3, 2.4, 2.5_
 
-- [ ] **9. El pingüino se mueve al hablar**
-  - Bob vertical con `G.time`, `PENGUIN_BOB_FREQ` y `PENGUIN_BOB_AMP`, solo cuando `step === TALK`.
-  - Mirá cómo lo hace `drawScene.js` con `BOSS_BOB_FREQ`.
-  - _Requisito: 2.6_
+- [ ] **9. El pingüino habla**
+  - Alterná `IMG.penguinTalk1` / `IMG.penguinTalk2` con `G.time` y `PENGUIN_TALK_FRAME_DURATION`, solo cuando `step === TALK`.
+  - Fuera de `TALK`, siempre `penguinTalk2` (boca cerrada).
+  - Los dos frames tienen los pies en la misma fila, así que no debería saltar. Si salta, estás anclando por el centro en vez de por los pies.
+  - _Requisitos: 2.6, 2.7_
 
 - [ ] **10. La salida y el arranque del combate**
   - Después de la última línea → `step = WALK_OUT`, ocultar el diálogo.
@@ -86,10 +87,9 @@ Marcá cada casilla cuando la termines. Cada tarea referencia el requisito que c
   - [ ] **El combate intacto:** 4 rondas → remate → victoria, sin ningún cambio de comportamiento.
   - _Requisitos: 3.4, 5.1, 5.2, 6.1, 6.2, 6.3, 6.4, 6.5, 6.6_
 
-- [ ] **13. Integrar el fondo real**
-  - Cuando A-1 esté listo, ponelo en `public/assets/art/_gameready/scene_island_path.png`.
-  - Ajustá `GROUND_Y` para que coincida con la línea de piso **real** de la imagen.
-  - Ajustá `HERO_MEET_X` y `PENGUIN_X` para que queden bien compuestos con el fondo.
+- [ ] **13. Afinar la composición contra el fondo real**
+  - `GROUND_Y`, `HERO_MEET_X` y `PENGUIN_X` vienen con valores calculados a ojo sobre el fondo. **Miralo corriendo y ajustalos**: los pies tienen que quedar sobre las losas, no sobre el pasto del primer plano ni flotando.
+  - Los tres valores están en `INTRO_SCENE.js`. Es lo único que deberías necesitar tocar.
   - _Requisitos: 1.5, 2.1_
 
 - [ ] **14. Repaso final antes de pedir merge**
