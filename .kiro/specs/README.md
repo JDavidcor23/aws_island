@@ -5,10 +5,18 @@
 
 ---
 
-## 🔴 Nadie arranca hasta que Jorge termine el PASO 0
+## ✅ El motor ya está preparado
 
-[`PASO-0-DIAZ.md`](./PASO-0-DIAZ.md) son 4 parches chiquitos al motor que existen para que ustedes tres
-**NO tengan que tocar los mismos archivos**. Sin eso, los tres features chocan en `GameEngine.js`.
+No hay nada que esperar: `main` ya tiene lo que los tres features necesitan del motor.
+
+| Ya disponible | Para qué | Lo usa |
+|---|---|---|
+| `initialState` en `GameEngine`, propagado desde `BattlePage` y `GameCanvas` | arrancar el juego en `INTRO` en vez de `TITLE` | `main-menu` |
+| `phase` + `setPhase` en `useGameStore` | saber la fase cruda del motor (las 12, no las 5 pantallas) | `intro-tutorial` |
+| la fase cruda como 3er argumento de `onScreenChange` | alimentar ese `phase` | `intro-tutorial` |
+
+Verificado corriendo: 36 transiciones de fase sin un solo error, `R` vuelve al estado inicial y los 21
+assets cargan. **Cada uno arranca su rama y va.**
 
 ---
 
@@ -20,18 +28,17 @@
 | [`boss-health-bar`](./boss-health-bar/) | `feature/jennifer` | **Jennifer** | FIG-2 | Canvas | `src/game/render/drawHUD.js` |
 | [`intro-tutorial`](./intro-tutorial/) | `feature/osvaldo` | **Osvaldo** | FIG-3 | Canvas | `GameEngine.js` · `battleLogic.js` · `drawScreens.js` · `ASSETS_MANIFEST.js` |
 
-Además: [`ASSETS.md`](./ASSETS.md) tiene los prompts del arte que falta. **Solo Jorge genera assets** — si tu
-spec necesita uno, pedilo en el grupo por su número (`A-1`, `A-2`…).
+**Los archivos compartidos de cada uno son distintos.** Cero intersección, cero conflictos de merge. Eso no
+es casualidad: el reparto está diseñado así.
 
-**Los tres archivos compartidos son distintos.** Cero intersección, cero conflictos de merge. Eso no es
-casualidad: el reparto está diseñado así.
+Tampoco es por gusto, es por **acoplamiento**: `intro-tutorial` es el único que reacciona a las fases del
+juego y engancha en 4 lugares del motor. `main-menu` no toca el motor en absoluto, por eso es el más seguro.
 
-El reparto tampoco es por gusto: es por **acoplamiento**. `intro-tutorial` es el único que necesita
-es el único que reacciona a las fases del juego y el único que necesita un asset nuevo. `main-menu` no toca el motor
-en absoluto, por eso es el más seguro.
+Cada spec tiene su **`reference.png`** — esa es su figura (FIG-1 / FIG-2 / FIG-3), compuesta con los assets
+reales en las coordenadas reales. **Abrila antes de escribir código.**
 
-Cada spec tiene su `mockup.svg` — esa es su figura (FIG-1 / FIG-2 / FIG-3), a escala 640×360 real.
-**Abrilos en el navegador**, no en el editor.
+Todo el arte ya está hecho: [`ASSETS.md`](./ASSETS.md) queda como registro del pipeline por si hay que
+regenerar algo. **Solo Jorge genera assets** — si necesitás uno nuevo, pedilo en el grupo por su número.
 
 ---
 
@@ -40,7 +47,7 @@ Cada spec tiene su `mockup.svg` — esa es su figura (FIG-1 / FIG-2 / FIG-3), a 
 | # | Archivo | Qué te dice |
 |---|---|---|
 | 1 | `requirements.md` | **QUÉ** construir, en formato EARS, y cuándo está terminado |
-| 2 | `mockup.svg` | **CÓMO SE VE** — tu figura, a escala real |
+| 2 | `reference.png` | **CÓMO SE VE** — tu figura, con los assets reales |
 | 3 | `design.md` | **CÓMO** se construye: archivos exactos, código, y las trampas |
 | 4 | `tasks.md` | **EN QUÉ ORDEN** — checklist ejecutable |
 

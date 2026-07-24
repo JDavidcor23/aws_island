@@ -6,10 +6,9 @@ Marcá cada casilla cuando la termines. Cada tarea referencia el requisito que c
 
 ---
 
-- [ ] **1. Preparar la rama y verificar el PASO 0**
+- [ ] **1. Preparar la rama**
   - `git checkout feature/osvaldo && git pull`
   - `npm run dev` levanta y se juega el combate completo. Si no, avisá en el grupo: no es tu culpa.
-  - **Confirmá que Jorge ya cerró el [PASO 0](../PASO-0-DIAZ.md).** Toca `GameEngine.js`, que vos también vas a tocar. Si no está, esperá — no lo hagas vos.
   - **El arte ya está hecho** — ver la tabla en el `requirements.md`. No tenés que pedir nada, solo registrarlo (tarea 3).
 
 - [ ] **2. Mapear el terreno (no lo saltees, son 30 min que ahorran horas)**

@@ -47,11 +47,14 @@ const createInitialState = () => ({
 })
 
 export class GameEngine {
-  constructor(canvas, { onScreenChange } = {}) {
+  constructor(canvas, { onScreenChange, initialState } = {}) {
     this.canvas = canvas
     this.ctx = canvas.getContext('2d')
     this.ctx.imageSmoothingEnabled = false
     this.onScreenChange = onScreenChange
+    // Pantalla en la que arranca el motor. El menú entra directo a INTRO para que
+    // el jugador no vea dos pantallas de título seguidas.
+    this.initialState = initialState ?? GAME_STATES.TITLE
     this.G = createInitialState()
     this.IMG = {}
     this.loadErrors = []
@@ -69,7 +72,7 @@ export class GameEngine {
     if (images.boss) this.IMG.bossWhite = assetsService.makeWhiteSprite(images.boss)
     this.IMG.glowRed = assetsService.makeGlowSprite('rgb(255,68,51)', 24)
     this.IMG.glowCyan = assetsService.makeGlowSprite('rgb(125,224,255)', 24)
-    this.setState(GAME_STATES.TITLE)
+    this.setState(this.initialState)
     this.lastTs = performance.now()
     this.rafId = requestAnimationFrame(this.frame)
   }
@@ -83,10 +86,11 @@ export class GameEngine {
     this.G.state = state
     this.G.t = 0
     if (this.onScreenChange) {
-      this.onScreenChange(REACT_SCREENS[state] ?? 'BATTLE', {
-        perfects: this.G.perfects,
-        hearts: this.G.hearts,
-      })
+      this.onScreenChange(
+        REACT_SCREENS[state] ?? 'BATTLE',
+        { perfects: this.G.perfects, hearts: this.G.hearts },
+        state, // fase cruda: REACT_SCREENS colapsa las 12 fases en 5 pantallas
+      )
     }
   }
 
@@ -98,7 +102,9 @@ export class GameEngine {
   reset() {
     this.G = createInitialState()
     this.effects.clear()
-    this.setState(GAME_STATES.TITLE)
+    // Vuelve a donde arrancó, no a TITLE: si el jugador entró desde el menú,
+    // reiniciar no lo tiene que devolver a una pantalla que ya no se usa.
+    this.setState(this.initialState)
   }
 
   // ---------- Input (lo conecta el hook de React) ----------

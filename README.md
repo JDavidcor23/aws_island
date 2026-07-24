@@ -118,19 +118,19 @@ Cada uno tiene **su rama** y **su spec**. Buscá tu nombre:
 | **Nicolás** | `feature/nicolas` | [`.kiro/specs/main-menu/`](./.kiro/specs/main-menu/) | **FIG-1** | React + CSS |
 | **Jennifer** | `feature/jennifer` | [`.kiro/specs/boss-health-bar/`](./.kiro/specs/boss-health-bar/) | **FIG-2** | Canvas |
 | **Osvaldo** | `feature/osvaldo` | [`.kiro/specs/intro-tutorial/`](./.kiro/specs/intro-tutorial/) | **FIG-3** | Canvas |
-| **Jorge** | `main` | [`PASO-0-DIAZ.md`](./.kiro/specs/PASO-0-DIAZ.md) + [`ASSETS.md`](./.kiro/specs/ASSETS.md) → repo, Vercel, arte, video | — | integración |
+| **Jorge** | `main` | [`ASSETS.md`](./.kiro/specs/ASSETS.md) → Vercel, arte, integración, video | — | integración |
 
 Tu rama ya está creada en GitHub: hacé `git checkout feature/tunombre` y listo, no tenés que crearla.
 
-> 🔴 **Nadie arranca hasta que Jorge termine [`PASO-0-DIAZ.md`](./.kiro/specs/PASO-0-DIAZ.md).** Son 4 parches
-> chiquitos al motor que existen para que los tres NO tengan que tocar los mismos archivos.
+> ✅ **No hay nada que esperar.** El motor ya está preparado y el arte ya está hecho. Cada uno hace
+> `git checkout` de su rama y arranca.
 
 ## Tu spec tiene 4 archivos. Leelos en este orden:
 
 | # | Archivo | Qué te dice |
 |---|---|---|
 | 1 | `requirements.md` | **QUÉ** hay que construir y cuándo está terminado |
-| 2 | `mockup.svg` | **CÓMO SE VE** — abrilo en el navegador, está a escala real (esa es tu FIG) |
+| 2 | `reference.png` | **CÓMO SE VE** — tu FIG, compuesta con los assets reales del juego |
 | 3 | `design.md` | **CÓMO** se construye: archivos exactos, código de ejemplo, trampas |
 | 4 | `tasks.md` | **EN QUÉ ORDEN** — checklist, tachá a medida que avanzás |
 

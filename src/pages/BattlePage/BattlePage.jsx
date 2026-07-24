@@ -3,12 +3,12 @@ import { useBattlePage } from './useBattlePage.hook'
 
 import './BattlePage.css'
 
-export const BattlePage = () => {
+export const BattlePage = ({ initialState }) => {
   const { hint } = useBattlePage()
 
   return (
     <main className="battle-page">
-      <GameCanvas />
+      <GameCanvas initialState={initialState} />
       <p className="battle-page__hint">{hint}</p>
     </main>
   )

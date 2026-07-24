@@ -42,7 +42,7 @@ Marcá cada casilla cuando la termines. Cada tarea referencia el requisito que c
 - [ ] **6. Enganchar con el juego**
   - `App.jsx`: `useState` para `started`, `<MainMenu onStart={...} />` cuando es `false`.
   - `<BattlePage initialState={GAME_STATES.INTRO} />` cuando es `true`.
-  - Confirmá que `src/game/GameEngine.js` tiene `this.initialState` (viene del [PASO 0](../PASO-0-DIAZ.md)). Si no está, avisá en el grupo y seguí con `<BattlePage />` pelado.
+  - `initialState` ya está soportado de punta a punta (`App` → `BattlePage` → `GameCanvas` → `GameEngine`). No tenés que tocar nada del motor.
   - _Requisitos: 1.1, 2.1, 2.2, 2.3, 2.4_
 
 - [ ] **7. Responsive**

@@ -86,7 +86,8 @@ src/constants/INTRO_SCENE.js         # geometría, tiempos y los textos del diá
 | `src/constants/ASSETS_MANIFEST.js` | registrar el fondo y los 6 frames de caminata |
 
 > **Ninguno de los otros dos features toca estos archivos.** Nicolás está en `App.jsx`, Jennifer en `drawHUD.js`.
-> Igual: hacelos **después** de que Jorge cierre el [PASO 0](../PASO-0-DIAZ.md), que toca `GameEngine.js`.
+> El motor ya expone lo que necesitás (`initialState` y la fase cruda en `onScreenChange`), así que solo
+> agregás tus 4 renglones.
 
 ---
 

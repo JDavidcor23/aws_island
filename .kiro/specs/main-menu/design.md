@@ -115,11 +115,12 @@ export const App = () => {
 }
 ```
 
-**La prop `initialState` sale del [PASO 0](../PASO-0-DIAZ.md)** (parches 2 y 4), que hace Jorge antes de
-repartir las ramas. Verificá que `src/game/GameEngine.js` tenga `this.initialState` en el constructor.
-Si no está, **no la implementes vos** — son archivos del motor y te pondrías en colisión con los otros dos
-features. Avisá en el grupo y mientras tanto trabajá con `<BattlePage />` pelado: tu feature se valida
-igual, solo vas a ver la pantalla de título del canvas después del menú.
+**La prop `initialState` ya existe en el motor**, así que esto funciona tal cual está escrito.
+`GameEngine` la acepta en el constructor, `init()` arranca ahí, y `reset()` (la tecla `R`) vuelve a ese mismo
+punto en vez de a `TITLE`. `BattlePage` y `GameCanvas` ya la pasan hacia abajo.
+
+Es lo **único** que tenés que tocar del motor: nada. Si `GAME_STATES.INTRO` te deja el diálogo del pingüino
+y querés otra pantalla de arranque, cambiás ese valor y listo.
 
 ---
 

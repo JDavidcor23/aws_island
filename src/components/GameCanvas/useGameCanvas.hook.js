@@ -5,9 +5,10 @@ import { useGameStore } from '../../stores/useGameStore.store'
 
 // Ciclo de vida del motor: se crea al montar, se destruye al desmontar.
 // El motor notifica cambios de pantalla y acá se sincronizan al store.
-export const useGameCanvas = () => {
+export const useGameCanvas = ({ initialState } = {}) => {
   const canvasRef = useRef(null)
   const setScreen = useGameStore((state) => state.setScreen)
+  const setPhase = useGameStore((state) => state.setPhase)
   const setStats = useGameStore((state) => state.setStats)
 
   useEffect(() => {
@@ -15,9 +16,11 @@ export const useGameCanvas = () => {
     if (!canvas) return undefined
 
     const engine = new GameEngine(canvas, {
-      onScreenChange: (screen, stats) => {
+      initialState,
+      onScreenChange: (screen, stats, phase) => {
         setScreen(screen)
         setStats(stats)
+        setPhase(phase)
       },
     })
     engine.init()
@@ -37,7 +40,7 @@ export const useGameCanvas = () => {
       canvas.removeEventListener('mousemove', engine.handleMouseMove)
       engine.destroy()
     }
-  }, [setScreen, setStats])
+  }, [setScreen, setStats, setPhase, initialState])
 
   return { canvasRef }
 }
