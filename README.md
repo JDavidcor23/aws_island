@@ -228,6 +228,22 @@ GitHub ya no las acepta: avisá en el grupo y te pasamos cómo generar un token.
 
 **Mensajes de commit:** `feat:` algo nuevo · `fix:` un arreglo · `style:` CSS.
 
+## Cuando avisen que hay arte nuevo
+
+El arte lo genera **Jorge** y lo sube a `main`. **Nadie se pasa imágenes por WhatsApp.**
+Cuando avise en el grupo, traelas a tu rama así:
+
+```bash
+git add . && git commit -m "wip"   # guardá tu trabajo primero
+git fetch origin
+git merge origin/main              # trae los assets nuevos sin pisar lo tuyo
+```
+
+`git merge origin/main` y no `git pull`: te trae lo de `main` sin tocar tu trabajo.
+
+> ⚠️ Si te aparece un conflicto en un archivo `.png`, **no lo resuelvas vos** — avisá en el grupo.
+> Significa que un asset entró por dos ramas y hay que arreglarlo en `main`.
+
 ---
 
 # Las 7 reglas (no negociables)

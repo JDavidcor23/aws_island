@@ -186,12 +186,49 @@ retro game menu. No text.
 
 ---
 
-## Cuando generes uno
+## Cuando generes uno — el flujo de distribución
 
-1. Guardalo en `public/assets/art/_gameready/` con el nombre exacto de este documento.
-2. Registrá la clave en `src/constants/ASSETS_MANIFEST.js`.
-3. Avisá en el grupo con el número (`"ya está A-1"`) — hay gente esperando.
-4. Marcá la fila en la tabla de **Estado** de arriba.
+> 🔴 **Los assets se commitean SIEMPRE a `main`, nunca a una rama de feature.**
+>
+> Los PNG son binarios y **git no los puede mergear**. Si el mismo archivo entra por dos ramas distintas,
+> cuando las dos vayan a `main` tenés un conflicto binario que hay que resolver a mano, archivo por archivo.
+> Con los assets en `main` hay **una sola fuente de verdad** y nadie se pasa imágenes por WhatsApp.
+
+**Jorge, cuando termines un asset:**
+
+```bash
+git checkout main && git pull
+
+# 1. el archivo va acá, con el nombre exacto de este documento
+#    public/assets/art/_gameready/<nombre>.png
+# 2. registrá la clave en src/constants/ASSETS_MANIFEST.js
+
+git add public/assets/art/_gameready/ src/constants/ASSETS_MANIFEST.js
+git commit -m "feat(assets): agrega A-1 scene_island_path"
+git push origin main
+```
+
+Después avisá en el grupo: **"ya está A-1, hagan `git merge origin/main`"**, y marcá la fila en la tabla de
+**Estado** de arriba.
+
+**Nicolás, Jennifer, Osvaldo — cuando avisen que hay un asset nuevo:**
+
+```bash
+git add . && git commit -m "wip"   # guardá tu trabajo primero
+git fetch origin
+git merge origin/main              # trae los assets nuevos a tu rama
+```
+
+`git merge origin/main` en vez de `git pull`: te trae lo de `main` **sin** pisar tu trabajo, y si hay
+conflicto es en código, no en imágenes.
+
+> ⚠️ **Si te aparece un conflicto en un `.png`**, algo se hizo mal: un asset entró por dos ramas.
+> **No lo resuelvas vos** — avisá en el grupo.
+
+**Podés registrar la clave en el manifest antes de tener la imagen.** El manifest se carga entero al
+arrancar y una clave sin archivo **no rompe el juego**: entra en `engine.loadErrors` y se dibuja el aviso
+en la pantalla de título. Eso desbloquea a quien esté esperando el asset: programa contra la clave, y
+cuando el PNG aparece, funciona sin tocar nada.
 
 > El manifest se carga entero en `assets.service.js` al arrancar. Si agregás una clave y el archivo no
 > existe, el juego **no explota**: entra en `engine.loadErrors` y se dibuja el aviso en la pantalla de título.
