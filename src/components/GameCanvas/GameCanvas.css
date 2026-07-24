@@ -1,0 +1,7 @@
+.game-canvas {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  width: min(100vw, calc((100vh - 40px) * 16 / 9));
+  height: min(calc(100vh - 40px), calc(100vw * 9 / 16));
+  cursor: pointer;
+}

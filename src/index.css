@@ -1,0 +1,14 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: #0b0b12;
+  color: #cfd8ea;
+  font-family: monospace;
+}

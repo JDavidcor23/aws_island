@@ -1,0 +1,11 @@
+node_modules/
+dist/
+*.local
+
+# Notas de reunión y documentos de trabajo
+*.docx
+
+# Basura de herramientas
+.playwright-mcp/
+tmp/
+output/
