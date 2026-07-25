@@ -23,7 +23,7 @@ export const updateIntroScene = (engine, dt) => {
       }
       break
     case INTRO_STEPS.TALK:
-      // El diálogo avanza por input (advanceIntroScene), no por frame.
+      intro.revealTime += dt
       break
     case INTRO_STEPS.WALK_OUT:
       intro.heroX += INTRO_SCENE.WALK_SPEED * dt
@@ -36,15 +36,29 @@ export const updateIntroScene = (engine, dt) => {
 }
 
 // Se llama desde el caso INTRO de advance() cuando el jugador aprieta ESPACIO
+// Primer SPACE: completa la línea instantáneamente. Segundo SPACE: avanza a la siguiente.
 export const advanceIntroScene = (engine) => {
   const intro = ensureIntro(engine.G)
   if (intro.step !== INTRO_STEPS.TALK) return
-  intro.line += 1
-  if (intro.line >= INTRO_LINES.length) {
-    intro.step = INTRO_STEPS.WALK_OUT
-    intro.walkTime = 0
+
+  // ¿La línea actual ya se reveló por completo?
+  const currentText = INTRO_LINES[intro.line].text
+  const revealedChars = Math.floor(intro.revealTime * INTRO_SCENE.REVEAL_CHARS_PER_SEC)
+  const isComplete = revealedChars >= currentText.length
+
+  if (!isComplete) {
+    // Primer SPACE: completar la línea instantáneamente
+    intro.revealTime = currentText.length / INTRO_SCENE.REVEAL_CHARS_PER_SEC
   } else {
-    sfxService.confirm()
+    // Segundo SPACE: avanzar a la siguiente línea
+    intro.line += 1
+    if (intro.line >= INTRO_LINES.length) {
+      intro.step = INTRO_STEPS.WALK_OUT
+      intro.walkTime = 0
+    } else {
+      intro.revealTime = 0
+      sfxService.confirm()
+    }
   }
 }
 

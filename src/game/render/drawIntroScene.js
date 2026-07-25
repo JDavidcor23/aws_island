@@ -48,7 +48,7 @@ export const drawIntroScene = (engine) => {
   // 4. Hint de saltear (esquina superior derecha, no tapa personajes)
   drawTextOutlined(ctx, INTRO_SCENE.SKIP_HINT, LAYOUT.W - 70, 20, 9, '#9fb6d8')
 
-  // 5. Caja de diálogo ARRIBA (no tapa personajes)
+  // 5. Caja de diálogo ARRIBA con efecto typewriter
   if (intro.step === INTRO_STEPS.TALK && intro.line < INTRO_LINES.length) {
     const line = INTRO_LINES[intro.line]
     const { w: dw, h: dh } = LAYOUT.DIALOGUE
@@ -56,10 +56,21 @@ export const drawIntroScene = (engine) => {
     const dy = 6
     if (IMG.dlg) ctx.drawImage(IMG.dlg, dx, dy, dw, dh)
     drawText(ctx, line.speaker, dx + 80, dy + 16, 9, '#f5e6c8')
-    wrapText(line.text, 40).forEach((ln, i) => {
-      drawText(ctx, ln, LAYOUT.W / 2, dy + 46 + i * 16, 12, '#4a3520')
+
+    // Typewriter: envolver PRIMERO, revelar DESPUÉS sobre líneas ya envueltas
+    const revealedChars = Math.floor(intro.revealTime * INTRO_SCENE.REVEAL_CHARS_PER_SEC)
+    const wrappedLines = wrapText(line.text, 40)
+    let charsLeft = revealedChars
+    wrappedLines.forEach((ln, i) => {
+      if (charsLeft <= 0) return
+      const visible = ln.slice(0, charsLeft)
+      charsLeft -= ln.length
+      drawText(ctx, visible, LAYOUT.W / 2, dy + 46 + i * 16, 12, '#4a3520')
     })
-    if (Math.floor(G.time * 2) % 2 === 0) {
+
+    // Mostrar "▼ ESPACIO" solo cuando la línea está completa
+    const isComplete = revealedChars >= line.text.length
+    if (isComplete && Math.floor(G.time * 2) % 2 === 0) {
       drawText(ctx, '▼ ESPACIO', dx + dw - 52, dy + dh - 14, 8, '#8a6d3f')
     }
   }

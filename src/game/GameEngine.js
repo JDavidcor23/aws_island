@@ -3,7 +3,7 @@ import { LAYOUT } from '../constants/LAYOUT'
 import { TIMING } from '../constants/TIMING'
 import { assetsService } from '../services/assets.service'
 import { sfxService } from '../services/sfx.service'
-import { advance, pickCard, timingPress } from './battle/battleLogic'
+import { advance, pickCard, timingPress, updateChooseTimer } from './battle/battleLogic'
 import { updateAttack } from './battle/attack'
 import { updateIntroScene, skipIntroScene } from './scenes/introScene'
 import { createEffects } from './fx/effects'
@@ -201,6 +201,8 @@ export class GameEngine {
     updateAttack(this, dt)
 
     if (G.state === GAME_STATES.INTRO) updateIntroScene(this, dt)
+
+    if (G.state === GAME_STATES.CHOOSE) updateChooseTimer(this)
 
     if (G.state === GAME_STATES.RESOLVE && G.t > TIMING.RESOLVE_DURATION) {
       this.setState(GAME_STATES.EXPLAIN)

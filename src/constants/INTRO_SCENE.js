@@ -14,6 +14,7 @@ export const INTRO_SCENE = {
     heroX: -40,
     line: 0,
     walkTime: 0,
+    revealTime: 0,
   },
 
   // geometría en el espacio lógico del canvas (640x360)
@@ -34,6 +35,7 @@ export const INTRO_SCENE = {
   SKIP_HINT: 'T para saltear',
 
   FALLBACK_BG: '#2b2333',   // si el fondo A-1 no cargó
+  REVEAL_CHARS_PER_SEC: 30,   // caracteres revelados por segundo (efecto typewriter)
 }
 
 // Las 3 cosas que el jugador necesita saber, en orden.
