@@ -4,6 +4,7 @@ import { UI_TEXTS } from '../../constants/UI_TEXTS'
 import { currentRound } from '../battle/battleLogic'
 import { drawBoss, drawHero } from './drawScene'
 import { drawText, drawTextOutlined, wrapText } from './textHelpers'
+import { drawIntroScene } from './drawIntroScene'
 
 // Pantallas y overlays: título, diálogos, remate, victoria y derrota.
 
@@ -41,11 +42,6 @@ export const drawTitleScreen = (engine) => {
   if (engine.loadErrors.length) {
     drawText(ctx, '⚠ no cargó: ' + engine.loadErrors.join(', '), LAYOUT.W / 2, LAYOUT.H - 14, 8, '#ff8866')
   }
-}
-
-export const drawIntroScreen = (engine) => {
-  drawPenguin(engine)
-  drawDialogue(engine, 'MENTOR 🐧', UI_TEXTS.INTRO_MENTOR)
 }
 
 export const drawProblemScreen = (engine) => {
@@ -130,7 +126,7 @@ export const drawLoadScreen = (engine) => {
 
 export const SCREEN_DRAWERS = {
   [GAME_STATES.TITLE]: drawTitleScreen,
-  [GAME_STATES.INTRO]: drawIntroScreen,
+  [GAME_STATES.INTRO]: drawIntroScene,
   [GAME_STATES.PROBLEM]: drawProblemScreen,
   [GAME_STATES.EXPLAIN]: drawExplainScreen,
   [GAME_STATES.FINISH_LINE]: drawFinishLineScreen,

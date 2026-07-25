@@ -5,6 +5,7 @@ import { assetsService } from '../services/assets.service'
 import { sfxService } from '../services/sfx.service'
 import { advance, pickCard, timingPress } from './battle/battleLogic'
 import { updateAttack } from './battle/attack'
+import { updateIntroScene, skipIntroScene } from './scenes/introScene'
 import { createEffects } from './fx/effects'
 import { drawBackground, drawBoss, drawHero, drawParticles } from './render/drawScene'
 import { drawHUD } from './render/drawHUD'
@@ -16,7 +17,7 @@ import { drawLoadScreen, SCREEN_DRAWERS } from './render/drawScreens'
 // NUNCA toca React por frame. Los cambios de pantalla se notifican con
 // onScreenChange (evento discreto) para que el shell React reaccione.
 const MAX_DT = 0.05
-const NO_HUD_STATES = [GAME_STATES.TITLE, GAME_STATES.DEFEAT, GAME_STATES.VICTORY]
+const NO_HUD_STATES = [GAME_STATES.TITLE, GAME_STATES.INTRO, GAME_STATES.DEFEAT, GAME_STATES.VICTORY]
 const REACT_SCREENS = {
   [GAME_STATES.LOAD]: 'LOAD',
   [GAME_STATES.TITLE]: 'TITLE',
@@ -116,6 +117,10 @@ export class GameEngine {
       this.reset()
       return
     }
+    if (G.state === GAME_STATES.INTRO && (key === 't' || key === 'T')) {
+      skipIntroScene(this)
+      return
+    }
     if (G.state === GAME_STATES.CHOOSE) {
       if (key >= '1' && key <= '4') {
         G.sel = Number(key) - 1
@@ -194,6 +199,8 @@ export class GameEngine {
 
     effects.update(dt)
     updateAttack(this, dt)
+
+    if (G.state === GAME_STATES.INTRO) updateIntroScene(this, dt)
 
     if (G.state === GAME_STATES.RESOLVE && G.t > TIMING.RESOLVE_DURATION) {
       this.setState(GAME_STATES.EXPLAIN)

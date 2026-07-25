@@ -4,6 +4,7 @@ import { CARD_IDS } from '../../constants/CARDS'
 import { LAYOUT } from '../../constants/LAYOUT'
 import { TIMING } from '../../constants/TIMING'
 import { sfxService } from '../../services/sfx.service'
+import { advanceIntroScene } from '../scenes/introScene'
 
 // Reglas del combate: rondas, elección de carta, bloqueo con timing y vida.
 // Todas las funciones reciben el engine y mutan su estado G (nunca React).
@@ -132,8 +133,7 @@ export const advance = (engine) => {
       engine.setState(GAME_STATES.INTRO)
       break
     case GAME_STATES.INTRO:
-      sfxService.confirm()
-      startRound(engine)
+      advanceIntroScene(engine)
       break
     case GAME_STATES.PROBLEM:
       if (G.t > TIMING.PROBLEM_MIN_WAIT) {
