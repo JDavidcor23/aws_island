@@ -166,6 +166,12 @@ def main():
         len(p) for p in leftover
         if sum(luminance(check.load()[x, y]) for x, y in p) / len(p) >= BRIGHT_MEAN
     ]
+    print()
+    print('FALTA UN PASO: esta plancha todavia NO esta cuantizada.')
+    print('La imagen generada trae ~49.000 colores y pesa 324 KB. Corre esto:')
+    print('  python scripts/postprocess.py %s %s --size 640x360 --colors 48' % (DST, DST))
+    print('Cuantizada baja a 27 KB sin perdida visible.')
+    print()
     print('manchas en agua abierta: %d' % len(blobs))
     print('clasificadas como camino: %d manchas, %d pixeles' % (
         len(blobs) - len(kept), len(road)))

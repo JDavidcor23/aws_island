@@ -266,14 +266,22 @@ anti-aliasing, no gradients. No characters, no people, no text, no letters, no
 numbers, no UI frames, no borders.
 ```
 
-**Post-proceso — OBLIGATORIO:**
+**Post-proceso — OBLIGATORIO, son DOS pasos:**
 
 ```bash
+# 1. borra el camino punteado que trae la imagen y el pueblo tropical de la Isla 0,
+#    rellenando con océano. Lee de assets/art/generated/a6_overworld_map.png
 python scripts/clean_overworld_plate.py
+
+# 2. cuantiza. El paso 1 NO cuantiza, y la imagen generada trae ~49.000 colores
+python scripts/postprocess.py \
+  public/assets/art/_gameready/scene_overworld_map.png \
+  public/assets/art/_gameready/scene_overworld_map.png --size 640x360 --colors 48
 ```
 
-Le borra el camino punteado que trae la imagen y borra el pueblo tropical de la Isla 0, rellenando con
-océano. Lee de `assets/art/generated/a6_overworld_map.png` y escribe la plancha final.
+> El paso 2 es fácil de olvidar y sale caro: sin cuantizar, la plancha pesa **324 KB** y es el asset más
+> grande del set. Cuantizada baja a **27 KB**, sin pérdida visible — el océano queda incluso más limpio.
+> El paso 1 termina imprimiendo el comando del paso 2 para que no se pase por alto.
 
 > **Lo que se aprendió peleándola.** El punteado generado venía **roto**: dos cadenas cortadas y la isla
 > jugable sin ninguna salida — el héroe no podía salir de la Isla 0. Y borrarlo por color falla tres veces:
