@@ -2,6 +2,7 @@ import { GAME_STATES } from '../../constants/GAME_STATES'
 import { LAYOUT } from '../../constants/LAYOUT'
 import { TIMING } from '../../constants/TIMING'
 import { drawTextOutlined } from './textHelpers'
+import { drawBossHealth } from './drawBossHealth'
 
 const BATTLE_STATES = [
   GAME_STATES.PROBLEM,
@@ -45,6 +46,9 @@ export const drawHUD = (engine) => {
     const label = G.extraRound ? '¡EL JEFE INSISTE!' : `PROBLEMA ${G.round + 1}/4`
     drawTextOutlined(ctx, label, LAYOUT.W - 14, 20, 11, '#ffffff', 'right')
   }
+
+  // barra de vida del jefe (antes de los floats para que queden encima)
+  drawBossHealth(engine)
 
   // textos flotantes por encima de todo el HUD
   for (const f of effects.floats) {
