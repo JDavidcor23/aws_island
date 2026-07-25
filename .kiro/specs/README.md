@@ -26,7 +26,17 @@ assets cargan. **Cada uno arranca su rama y va.**
 |---|---|---|---|---|---|
 | [`main-menu`](./main-menu/) | `feature/nicolas` | **Nicolás** | FIG-1 | React DOM puro | `src/App.jsx` |
 | [`boss-health-bar`](./boss-health-bar/) | `feature/jennifer` | **Jennifer** | FIG-2 | Canvas | `src/game/render/drawHUD.js` |
-| [`intro-tutorial`](./intro-tutorial/) | `feature/osvaldo` | **Osvaldo** | FIG-3 | Canvas | `GameEngine.js` · `battleLogic.js` · `drawScreens.js` · `ASSETS_MANIFEST.js` |
+| [`intro-tutorial`](./intro-tutorial/) ✅ | `feature/osvaldo` | **Osvaldo** | FIG-3 | Canvas | `GameEngine.js` · `battleLogic.js` · `drawScreens.js` · `ASSETS_MANIFEST.js` |
+
+**Trabajo extra, después del reparto original:**
+
+| Doc | Owner | Qué es |
+|---|---|---|
+| [`RITMO_Y_JUICE.md`](./RITMO_Y_JUICE.md) | **Osvaldo** (T-1, T-2) | Límite de 5 segundos para elegir carta, y texto que se escribe solo. Incluye por qué la vida del jefe **no** se toca |
+| [`CONCEPTO_ISLA_0.md`](./CONCEPTO_ISLA_0.md) | **Jorge** | El contrato de arte de la isla: 7 elementos fijos y paletas pareadas. **Se lee antes de generar cualquier arte** |
+
+> ✅ `intro-tutorial` está **entregado** (commit `1de9279`, verificado integrado). Su
+> [README](./intro-tutorial/README.md) tiene el estado y lo que sigue.
 
 **Los archivos compartidos de cada uno son distintos.** Cero intersección, cero conflictos de merge. Eso no
 es casualidad: el reparto está diseñado así.

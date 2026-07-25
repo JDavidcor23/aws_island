@@ -22,6 +22,7 @@ Uso:
 """
 
 import argparse
+import os
 import sys
 
 from PIL import Image
@@ -30,6 +31,8 @@ from PIL import Image
 # pixel para considerarse fondo. Los fondos verdes de codex son muy saturados.
 CHROMA_DOMINANCE = 40
 CHROMA_MIN_GREEN = 90
+# Desde donde un pixel cuenta como opaco, para aplanar el fondo antes de cuantizar.
+ALPHA_CUTOFF = 128
 
 
 def parse_size(value):
@@ -90,14 +93,63 @@ def resize(img, size, keep_aspect):
     return canvas
 
 
+def dominant_opaque_color(rgb, alpha):
+    """Color opaco mas frecuente. Sirve para aplanar la zona transparente."""
+    counts = {}
+    pixels = rgb.load()
+    mask = alpha.load()
+    width, height = rgb.size
+    for y in range(height):
+        for x in range(width):
+            if mask[x, y] >= ALPHA_CUTOFF:
+                key = pixels[x, y]
+                counts[key] = counts.get(key, 0) + 1
+    if not counts:
+        return (0, 0, 0)
+    return max(counts.items(), key=lambda item: item[1])[0]
+
+
 def quantize(img, colors):
-    """Reduce la paleta preservando el canal alfa."""
+    """Reduce la paleta preservando el canal alfa.
+
+    MAXCOVERAGE y no MEDIANCUT: median cut corta el espacio de color por POBLACION, asi
+    que en una escena dominada por verdes y azules los colores minoritarios se fusionan y
+    desaparecen. Medido en scene_island_after: con median cut a 32 y a 48 colores el
+    terracota de los techos quedaba MARRON. MAXCOVERAGE optimiza cobertura del espacio de
+    color, y a 48 colores los techos sobreviven fieles al original.
+
+    dither=NONE y no el Floyd-Steinberg que PIL usa por defecto: el dithering mezcla
+    pixeles de colores distintos para simular tonos intermedios. En pixel art eso es ruido
+    -- ensucia las zonas planas y pelea con el escalado nearest-neighbor del canvas.
+    """
     img = img.convert("RGBA")
     alpha = img.getchannel("A")
-    rgb = img.convert("RGB").quantize(colors=colors, method=Image.MEDIANCUT)
-    out = rgb.convert("RGBA")
+    rgb = img.convert("RGB")
+
+    # Aplanar lo transparente a un color que ya existe: si no, la paleta gasta entradas
+    # en pixeles que nadie ve.
+    if alpha.getextrema()[0] < ALPHA_CUTOFF:
+        flat = dominant_opaque_color(rgb, alpha)
+        pixels = rgb.load()
+        mask = alpha.load()
+        width, height = rgb.size
+        for y in range(height):
+            for x in range(width):
+                if mask[x, y] < ALPHA_CUTOFF:
+                    pixels[x, y] = flat
+
+    reduced = rgb.quantize(colors=colors, method=Image.MAXCOVERAGE, dither=Image.NONE)
+
+    # Si no hay transparencia, se guarda en modo PALETA. Volver a RGBA tira la
+    # compresion: medido en scene_island_after, RGBA pesa 206 KB y paleta 76 KB con los
+    # mismos 48 colores. Solo los assets con alfa pagan ese costo.
+    if alpha.getextrema()[0] == 255:
+        print(f"  quantize: {colors} colores (MAXCOVERAGE, sin dithering, modo paleta)")
+        return reduced
+
+    out = reduced.convert("RGBA")
     out.putalpha(alpha)
-    print(f"  quantize: {colors} colores")
+    print(f"  quantize: {colors} colores (MAXCOVERAGE, sin dithering, RGBA por el alfa)")
     return out
 
 
@@ -130,8 +182,8 @@ def main():
         img = trim_to_content(img)
     img = resize(img.convert("RGBA"), args.size, args.keep_aspect)
     img = quantize(img, args.colors)
-    img.save(args.dest)
-    print(f"OK {args.dest}")
+    img.save(args.dest, optimize=True)
+    print(f"OK {args.dest}  ({img.mode}, {os.path.getsize(args.dest) / 1024:.1f} KB)")
     return 0
 
 

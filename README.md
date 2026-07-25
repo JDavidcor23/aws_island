@@ -18,6 +18,10 @@ El diseño completo del juego vive en [CLOUD_QUEST.md](./CLOUD_QUEST.md).
 - [Si algo no funciona](#si-algo-no-funciona)
 - [Arquitectura (leer antes de codear)](#arquitectura-leer-antes-de-codear)
 
+> 📋 **Tareas nuevas de ritmo y juice:** [`.kiro/specs/RITMO_Y_JUICE.md`](./.kiro/specs/RITMO_Y_JUICE.md)
+> — límite de 5 segundos para elegir carta, texto que se escribe solo, y por qué la vida del jefe **no** se
+> toca. Dice quién toma cada una y en qué orden.
+
 ---
 
 # PARTE 1 — Instalar todo (una sola vez, ~15 min)
@@ -188,6 +192,7 @@ git pull
 ## 🧑‍💻 Osvaldo — Escena de Tutorial · FIG-3
 
 **Rama:** `feature/osvaldo` · **Spec:** [`.kiro/specs/intro-tutorial/`](./.kiro/specs/intro-tutorial/)
+📌 **Empezá por su [README](./.kiro/specs/intro-tutorial/README.md)** — hay **tareas nuevas** y el fondo cambió.
 
 Hoy el jugador aprende las mecánicas **perdiendo corazones**. Para un jurado con 5 minutos, eso es fatal.
 
@@ -198,8 +203,9 @@ el héroe sigue caminando hacia el servidor. Recién ahí arranca la pelea.
 **Es canvas, no HTML** — sprites, ciclo de caminata de 6 frames y una línea de piso. Y es la tarea más
 acoplada de las tres: engancha en 4 lugares del motor. El spec te da los 4 diffs exactos.
 
-⚠️ **Tenés una dependencia de arte:** el fondo de la escena (`A-1`) todavía no existe, lo genera Jorge.
-**Podés arrancar igual** — el spec te dice cómo trabajar con un fondo de color plano hasta que esté.
+> ✅ **Entregado el 25/07** (commit `1de9279`), revisado y verificado integrado. No hay nada que arreglar.
+> ⚠️ Pero el fondo `A-1` **se regeneró**: hacé `git merge origin/main`. Tu `GROUND_Y = 295` sigue bien.
+> 📋 Y tenés dos tareas nuevas en [`RITMO_Y_JUICE.md`](./.kiro/specs/RITMO_Y_JUICE.md).
 
 ```bash
 git checkout feature/osvaldo
