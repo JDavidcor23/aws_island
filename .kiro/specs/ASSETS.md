@@ -16,6 +16,18 @@ codex exec --sandbox danger-full-access -m gpt-5.5 -- "<prompt>" < /dev/null
 **Pedile fondo verde puro (RGB 0,255,0), no transparente.** Es más confiable que pedir alfa, y el chroma
 key lo resuelve después. Los fondos de escena van sin chroma.
 
+> 🔧 **`postprocess.py` se corrigió el 25/07 y esto afecta a TODO asset que se genere de acá en adelante.**
+> Tenía tres problemas que degradaban silenciosamente el arte:
+>
+> | Antes | Ahora | Por qué importa |
+> |---|---|---|
+> | `method=MEDIANCUT` | `method=MAXCOVERAGE` | median cut corta el espacio de color por **población**: en una escena dominada por verdes y azules, los colores minoritarios se fusionan y desaparecen. Medido: el terracota de los techos quedaba **marrón** |
+> | `dither` por defecto = **Floyd-Steinberg** | `dither=NONE` | el dithering mezcla píxeles para simular tonos intermedios. En pixel art eso es **ruido**: ensucia las zonas planas y pelea con el escalado nearest-neighbor del canvas. **Todo el arte anterior salió dithereado** |
+> | `convert("RGBA")` + `save()` sin optimize | modo **paleta** si no hay alfa, `optimize=True` | volver a RGBA tira la compresión. Medido en `scene_island_after`: **206 KB en RGBA contra 76 KB en paleta**, con los mismos 48 colores |
+>
+> Si algún asset viejo se ve sucio o pesa de más, es esto: **basta con volver a correr `postprocess.py`** sobre
+> su raw de `assets/art/`, sin regenerar nada.
+
 Post-proceso — los scripts **viven en el repo**, en `scripts/`:
 
 ```bash
@@ -58,6 +70,20 @@ Los cinco assets están en `public/assets/art/_gameready/` y **registrados** en
 | **A-3** | Logo CLOUD QUEST | `logo_cloud_quest.png` | 400×214 | `logo` | `main-menu` |
 | **A-4** | Pingüino hablando | `penguin_talk_1.png` · `penguin_talk_2.png` | 128×128 | `penguinTalk1` · `penguinTalk2` | `intro-tutorial` |
 | **A-5** | Marco de botón del menú | `menu_button.png` | 240×44 | `menuButton` | `main-menu` |
+| **A-6** | Plancha del mapamundi | `scene_overworld_map.png` | 640×360 | `map` | `overworld` |
+| ~~A-7~~ | ~~Nodo de la Isla 0~~ | **reemplazado por A-9** | — | — | — |
+| **A-8** | Panorámicas de la isla, par | `scene_island_before.png` · `scene_island_after.png` | 640×360 | `after` | victoria |
+| **A-9** | Nodo de la Isla 0, 2 estados | `island0_before.png` · `island0_after.png` | 112×96 | `island0Before` · `island0After` | `overworld` |
+| **A-10** | Arena del jefe · camino del tutorial | `scene_battle_arena.png` · `scene_island_path.png` | 640×360 | `arena` · `islandPath` | combate · `intro-tutorial` |
+
+> 🔴 **A-8, A-9 y A-10 salen del mismo concepto**: [`CONCEPTO_ISLA_0.md`](./CONCEPTO_ISLA_0.md). **Leelo antes de
+> regenerar cualquiera de los seis.** Los primeros assets se generaron con prompts independientes y el
+> resultado fueron cuatro mundos distintos en vez de cuatro vistas del mismo lugar — es el error que ese
+> documento existe para no repetir.
+
+> ⚠️ A-6 y A-7 **no** van en `ASSETS_MANIFEST.js`. El mapamundi tiene su propio manifest en
+> `src/constants/OVERWORLD.js` (`OVERWORLD_ASSETS`), justamente para no tocar el archivo compartido del
+> combate. Ver A-6 y A-7 abajo.
 
 Además se registraron los 6 frames de caminata (`walk1`..`walk6`) y `heroSide`, que **existían como
 archivos pero no estaban en el manifest**, así que no se cargaban.
@@ -205,6 +231,181 @@ pixel ornaments at the left and right ends. The center is empty and flat so text
 be drawn on top by code. Style: clean HD pixel art, 16 colors, crisp edges, modern
 retro game menu. No text.
 ```
+
+---
+
+## A-6 · Plancha del mapamundi — `scene_overworld_map.png`
+
+**Clave en el manifest:** `map` (en `OVERWORLD_ASSETS`, no en `ASSETS_MANIFEST`)
+**Tamaño final:** 640×360
+
+Es **solo paisaje**: océano y las 8 islas bloqueadas. Dos cosas NO están en el PNG y son a propósito:
+
+| Qué falta en el PNG | Quién lo pone | Por qué |
+|---|---|---|
+| El camino punteado | `drawOverworld.js` | El camino y el grafo por donde camina el héroe tienen que salir del **mismo dato**. Si el camino es arte, cada nodo hay que reconstruirlo leyendo píxeles y a la primera corrección se desincroniza. |
+| El nodo de la Isla 0 | sprite A-7 compuesto en runtime | Tiene **dos estados**, oxidado y revivido. |
+
+```
+Top-down overworld world map for a 2D pixel art adventure game, exactly 640x360,
+in the spirit of the overworld maps of Super Mario World and Cuphead. Bright
+saturated tropical ocean, vivid blue water with crisp pixel wave highlights and
+light foam. Nine small compact islands laid out in a single winding serpentine
+route, from the bottom-left corner up to the upper-right area. A clearly visible
+continuous dotted path of small cream-colored dots connects the islands in order.
+Each island is small and readable with a flat open clearing in its middle, so a
+32 pixel tall character sprite standing on it reads clearly. The bottom-left
+island is fully revealed and cheerful. The other eight are visibly locked: partly
+wrapped in soft white clouds and mist, slightly desaturated and cooler, each
+marked with a small light-gray padlock icon, but still readable in silhouette.
+Art direction, critical: clean HD pixel art, VERY colorful, warm, cheerful and
+saturated, western semi-anime like Sea of Stars and Eastward. Absolutely NOT
+dark, NOT grim, NOT muddy brown, NOT post-apocalyptic, NOT painterly, NOT
+photorealistic. Crisp hard pixel edges, limited palette, no blur, no
+anti-aliasing, no gradients. No characters, no people, no text, no letters, no
+numbers, no UI frames, no borders.
+```
+
+**Post-proceso — OBLIGATORIO:**
+
+```bash
+python scripts/clean_overworld_plate.py
+```
+
+Le borra el camino punteado que trae la imagen y borra el pueblo tropical de la Isla 0, rellenando con
+océano. Lee de `assets/art/generated/a6_overworld_map.png` y escribe la plancha final.
+
+> **Lo que se aprendió peleándola.** El punteado generado venía **roto**: dos cadenas cortadas y la isla
+> jugable sin ninguna salida — el héroe no podía salir de la Isla 0. Y borrarlo por color falla tres veces:
+> cada punto es un núcleo casi blanco `(253,252,232)` con un halo que se degrada hasta el azul del agua, así
+> que filtrar por color borra el núcleo y **deja el halo, que se ve como un punto más chico**. La solución es
+> clasificar la **mancha conexa completa** por luminancia media (clara = camino, oscura = roca del océano) y
+> dilatar 2px. El relleno se copia de la **misma fila**: el océano tiene bandeado horizontal y muestrear de
+> otra fila deja un escalón visible.
+
+**Verificación:**
+
+- [x] El script chequea el resultado y sale con código **1** si queda alguna mancha clara de más de 20px.
+- [x] Las rocas chicas del océano sobreviven (se protegen por ser oscuras).
+- [x] El lugar de la Isla 0 queda como agua limpia, sin costura.
+- [ ] Quedan **3 manchas de 16, 6 y 2 px** pegadas a la costa de algunas islas: son el primer punto de cada
+      tramo, que cae dentro del margen protegido. Se leen como arena y están toleradas. Si molestan, hay que
+      bajar `MARGIN` en el script para esas islas puntuales.
+
+---
+
+## A-8 · A-9 · A-10 — las seis vistas del concepto
+
+Los prompts completos, tal cual se usaron, están en [`scripts/gen_isla0.sh`](../../scripts/gen_isla0.sh) y su
+estructura es siempre la misma: un bloque `CONCEPT` con los 7 elementos fijos, un bloque `SICK` y un bloque
+`HEALED` con las paletas pareadas, y después el encuadre de cada archivo. **Los tres bloques se pegan
+literales en cada prompt.** Eso es lo único que garantiza que las seis vistas sean el mismo lugar.
+
+Ver [`CONCEPTO_ISLA_0.md`](./CONCEPTO_ISLA_0.md) para los 7 elementos, las dos paletas y las restricciones
+mecánicas de la arena.
+
+### Post-proceso — OBLIGATORIO en las seis
+
+```bash
+# las 4 escenas
+python scripts/postprocess.py assets/art/generated/a8_island_before.png \
+  public/assets/art/_gameready/scene_island_before.png --size 640x360 --colors 48
+# los 2 nodos del mapa
+python scripts/postprocess.py assets/art/generated/a9_node_before.png \
+  public/assets/art/_gameready/island0_before.png --size 112x96 --colors 48
+```
+
+**Por qué no es opcional.** Las imágenes que devuelve el generador vienen con **decenas de miles de colores**:
+gradientes y antialiasing disfrazados de pixel art. Medido: `scene_island_after` salió con **133.786 colores y
+485 KB**, contra los **32 colores** de los assets originales del proyecto. Escalado ~3x con
+`image-rendering: pixelated`, eso se ve pastoso y contradice la dirección de arte.
+
+Cuantizadas: **48 colores, 54–76 KB, entre −83% y −86% de peso.** El set entero de `_gameready` quedó en 1.03 MB.
+
+> **Por qué 48 colores con MAXCOVERAGE y no 32 con median cut.** Se comparó en pantalla, no a ojo:
+>
+> | Método | Resultado |
+> |---|---|
+> | median cut 32 y 48 | el **terracota de los techos desaparece** y queda marrón. Median cut corta por población y los verdes y azules aplastan numéricamente a los rojos |
+> | MAXCOVERAGE 32 | recupera el terracota pero mete tinte violeta en las paredes claras |
+> | **MAXCOVERAGE 48** | **fiel al original, 76 KB** ← este |
+> | octree 32 y 48 | recupera el terracota pero deja motas celestes sueltas en los techos |
+> | median cut 96 | también sirve, pero pesa 117 KB: más caro y menos fiel |
+>
+> MAXCOVERAGE optimiza cobertura del espacio de color en vez de población, así que los colores minoritarios
+> —los techos— sobreviven. Y siempre `dither=NONE`: el dithering inventa ruido y arruina el pixel art.
+
+### Verificación
+
+- [x] Las seis a 48 colores, y el alfa de los dos nodos preservado como transparencia binaria.
+- [x] Las panorámicas comparten encuadre, horizonte y silueta exactos; los 7 elementos en su posición.
+- [x] El esqueleto del servidor **sigue en pie** en las versiones sanas, tomado por el verde. Misma silueta.
+- [x] Las tuberías **siguen cruzando** el mismo suelo, ahora blancas y limpias.
+- [x] La arena pasa `check_arena.py`: menos detalle detrás del jefe (7.82 vs 9.72) y piso más plano (11.18 vs 26.23) que la referencia.
+- [x] Verificado en el navegador: el jefe se lee **mejor** que en la arena vieja, siluetado contra el hueco pálido.
+- [ ] ⚠️ **Preexistente, no lo introdujo A-8.** En la pantalla de victoria el texto blanco de los stats y la
+      línea `🔒 Isla 1: EC2 — Próximamente...` **casi no se leen** sobre el fondo brillante. Comprobado con la
+      imagen vieja: pasaba igual. El arreglo va en `drawScreens.js` (caja oscura translúcida detrás del texto,
+      o subir el contorno) — **archivo del spec `intro-tutorial`**, así que lo decide su owner.
+
+---
+
+## ~~A-7~~ · Nodo de la Isla 0 — reemplazado por A-9
+
+Primer intento del nodo con dos estados. Quedó obsoleto: se generó **antes** de que existiera el concepto, así
+que la isla no compartía elementos con el resto de las vistas, y la torre blanca del estado sano se leía como
+una losa en blanco. Se conserva el registro porque de acá salió la lección: los pares antes/después **se
+generan en la misma corrida**, y sin concepto escrito cada corrida inventa una isla nueva.
+
+El prompt viejo, para referencia histórica:
+
+**Claves:** `island0Before` · `island0After` (en `OVERWORLD_ASSETS`)
+**Tamaño final:** 112×96, **fondo transparente**
+
+**Por qué existe.** El pueblo tropical que traía A-6 no era esta isla: la Isla 0 es un **pueblo-empresa
+oxidado** con molino, torre de agua y el Legacy Server encima. El molino es su firma visual y aparece en
+`island_before`, `island_path` e `island_after`. Un pueblo con palmeras no comparte ni un punto de referencia.
+
+**El requisito difícil es la continuidad**: las dos versiones tienen que ser el MISMO lugar. Por eso se
+generan en **una sola corrida**, con instrucción explícita de mantener silueta y posiciones idénticas y
+cambiar solo el estado. Generarlas por separado da dos islas distintas.
+
+```
+Generate TWO pixel art sprites [...] exactly 112x96 with a fully TRANSPARENT background.
+
+CRITICAL: the two sprites must be the SAME ISLAND in two different states.
+Identical island silhouette, identical shoreline, identical positions for every
+building. Only the condition changes: decayed versus revived. Draw the second by
+repainting the first, not by inventing a new island.
+
+Layout, identical in both: a tall structure on the highest point at the upper
+middle; a windmill on the left; a cylindrical water tower on the right; three
+small houses in the lower middle; a path of stone slabs winding between them; a
+few trees near the edges. Sandy beach ring and a thin white foam outline at the
+shore. Everything outside the island silhouette transparent. No padlock, no
+characters, no text.
+
+BEFORE: the tall structure is a colossal rusted legacy server tower, dark
+corroded metal, stacked server racks, thick cables spilling down like roots, two
+or three columns of dark smoke. Windmill crooked with torn blades. Water tower
+rusted and stained. Houses with broken sagging roofs. Cracked slabs. Bare dead
+trees. Sickly gray-yellow patchy grass, stagnant toxic green puddles, corroded
+pipes. Palette: rust orange, corroded brown, gray steel, sickly yellow-green.
+
+AFTER, exact same layout: the rusted tower is GONE, in its place a clean bright
+white lighthouse-like tower with soft cyan accents. No smoke. Windmill repaired
+and white. Water tower clean. Houses with warm blue-teal tiled roofs. Slabs whole.
+Trees full and leafy green. Vivid saturated green grass with small flowers, clear
+blue puddles. Palette: warm, saturated, cheerful and alive.
+```
+
+**Verificación:**
+
+- [x] Fondo realmente transparente en las dos (verificado por canal alfa).
+- [x] Misma silueta, mismo anillo de arena, y molino / torre de agua / 3 casas en la **misma posición**.
+- [x] El estado oxidado se lee claramente distinto de las 8 islas coloridas: "esta está enferma".
+- [ ] ⚠️ **Pendiente de pulido:** en `island0_after` la torre blanca y la torre de agua se leen como losas
+      blancas en blanco, sin remate. Es el arte más flojo que hay en pantalla.
 
 ---
 
