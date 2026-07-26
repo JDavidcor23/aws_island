@@ -18,7 +18,18 @@ export const PHASE_CONFIG = {
     // suelto sí sería un problema — ver la nota del spec en tutorial-revancha.
     highlightAnswer: true,
     openInfoOnPick: true,           // jugar una carta sin leer la abre en vez de jugarla
+    // Las cartas que NO son la respuesta se muestran apagadas y no se pueden jugar.
+    //
+    // ⚠️ Esto contradice el modelo de enseñanza que documentan startRound y pickCard: ahí
+    // el punto era que el jugador PUEDA elegir una equivocada, porque leerla es cómo
+    // descubre que no sirve, y descartar es la habilidad que después le pide la revancha.
+    // Con las cartas bloqueadas el tutorial se vuelve "apretá la que brilla" y esa práctica
+    // no ocurre. Se implementó porque el jugador lo pidió explícitamente al probarlo.
+    // Poner esto en false devuelve el tutorial al diseño original. La ficha se puede leer
+    // igual: el badge '?' sigue funcionando sobre las cartas bloqueadas.
+    lockWrongCards: true,
     explainAlways: true,            // el mentor explica acertando o fallando
+    explainOnMistake: true,         // y con más razón si erraste
     problemNeedsSpace: true,        // PROBLEM espera ESPACIO
     specialTriggersFinisher: false, // el tutorial termina por rondas, no por especial
     bossHpMirrorsSpecial: false,    // en el tutorial la barra del jefe cuenta problemas
@@ -32,7 +43,22 @@ export const PHASE_CONFIG = {
     loseHeartOnWrong: true,
     highlightAnswer: false,         // acá se terminan las ayudas: ninguna carta se marca
     openInfoOnPick: false,          // acá el panel es consulta voluntaria, no un paso
-    explainAlways: false,           // solo explica si erraste carta o falláste el bloqueo
+    lockWrongCards: false,          // en la revancha las cuatro cartas están en juego
+    explainAlways: false,
+    // El pingüino NO frena la revancha, ni siquiera cuando erras.
+    //
+    // Esto revierte el requisito 5.7 del spec tutorial-revancha, que pedía explicar la
+    // característica antes de continuar si erraste carta o falláste el bloqueo. El
+    // razonamiento del spec era bueno — si erraste no lo aprendiste, entonces te lo
+    // enseño — pero jugándolo no se sostiene: un error ya te cuesta un corazón, y encima
+    // te comías una pantalla modal con el MISMO texto que ya leíste en el tutorial para
+    // ese mismo problema. Tres castigos por un error, y el tercero te saca del ritmo justo
+    // cuando estás corriendo contra un reloj de 5 segundos.
+    //
+    // La intención del requisito se conserva: la lección sigue apareciendo, como texto
+    // flotante que no pide input (ver mistakeHint en endRound). Deja de ser un freno.
+    // Para volver al comportamiento del spec, poner esto en true. Nada más.
+    explainOnMistake: false,
     problemNeedsSpace: false,       // encadena solo
     specialTriggersFinisher: true,
     bossHpMirrorsSpecial: true,     // en la revancha el especial ES la vida del jefe
