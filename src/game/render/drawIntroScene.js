@@ -1,7 +1,8 @@
 import { LAYOUT } from '../../constants/LAYOUT'
 import { INTRO_SCENE, INTRO_STEPS, INTRO_LINES } from '../../constants/INTRO_SCENE'
-import { boatX, fadeAlpha, fadePastMidpoint, heroBoatPos } from '../scenes/introScene'
-import { drawText, drawTextOutlined, wrapText } from './textHelpers'
+import { boatX, fadeAlpha, fadePastMidpoint, heroBoatPos, penguinIsWalking } from '../scenes/introScene'
+import { drawTypedDialogue } from './drawDialogue'
+import { drawTextOutlined } from './textHelpers'
 
 // Helper: ancla sprites por los PIES, no por el centro.
 // La esquina superior va en groundY - size (los pies tocan groundY).
@@ -52,20 +53,62 @@ const drawSeaScene = (engine, intro) => {
   }
 }
 
+// Frame del mentor caminando. Devuelve { img, hop }: `hop` es el rebote vertical que hay
+// que sumarle, y sólo es distinto de cero en el camino de fallback.
+//
+// Con penguin_walk_1..4 presentes, el ciclo real ya trae su propio sube-y-baja y sumarle
+// un seno encima lo haría flotar. Sin ellos —una clave del manifest sin archivo no rompe
+// el juego, entra en engine.loadErrors— el pingüino TIENE que caminar igual: quedarse
+// quieto es exactamente el bug que esto viene a arreglar, y un asset que falta no puede
+// devolvernos ahí. El plan B alterna los dos frames de habla (aleta arriba / aleta abajo)
+// y agrega el rebote a mano, que a 8 fps se lee como un pingüino contoneándose.
+const penguinWalkSprite = (engine, intro) => {
+  const { IMG, G } = engine
+  const { PENGUIN_WALK } = INTRO_SCENE
+  const frames = [IMG.penguinWalk1, IMG.penguinWalk2, IMG.penguinWalk3, IMG.penguinWalk4]
+
+  if (frames.every(Boolean)) {
+    const index = Math.floor(intro.penguinWalkTime / PENGUIN_WALK.FRAME_DURATION) % PENGUIN_WALK.FRAME_COUNT
+    return { img: frames[index], hop: 0 }
+  }
+
+  const flipperUp = Math.floor(intro.penguinWalkTime / PENGUIN_WALK.FRAME_DURATION) % 2 === 0
+  return {
+    img: flipperUp ? IMG.penguinTalk1 : IMG.penguinTalk2,
+    // Math.abs: un rebote sólo hacia ARRIBA. Un seno con signo lo hunde en el piso media
+    // parte del ciclo, y ahí se ve como si pisara en un pozo.
+    hop: -Math.abs(Math.sin(G.time * PENGUIN_WALK.FALLBACK_HOP_FREQ)) * PENGUIN_WALK.FALLBACK_HOP_AMP,
+  }
+}
+
 const drawVillageScene = (engine, intro) => {
   const { ctx, IMG, G } = engine
 
-  // Pingüino — alterna frames si está hablando
-  const talking = intro.step === INTRO_STEPS.TALK
-  const mouthOpen = Math.floor(G.time / INTRO_SCENE.PENGUIN_TALK_FRAME_DURATION) % 2 === 0
-  const penguinImg = talking && mouthOpen ? IMG.penguinTalk1 : IMG.penguinTalk2
+  // --- Pingüino ---
+  const walking = penguinIsWalking(intro)
+  let penguinImg
+  let penguinHop = 0
+  if (walking) {
+    const sprite = penguinWalkSprite(engine, intro)
+    penguinImg = sprite.img
+    penguinHop = sprite.hop
+  } else {
+    // Quieto: alterna la boca si está hablando
+    const talking = intro.step === INTRO_STEPS.TALK
+    const mouthOpen = Math.floor(G.time / INTRO_SCENE.PENGUIN_TALK_FRAME_DURATION) % 2 === 0
+    penguinImg = talking && mouthOpen ? IMG.penguinTalk1 : IMG.penguinTalk2
+  }
   if (penguinImg) {
     drawGrounded(
       ctx,
       penguinImg,
-      INTRO_SCENE.PENGUIN_X,
+      intro.penguinX,
       INTRO_SCENE.PENGUIN_SIZE,
-      INTRO_SCENE.PENGUIN_FACES_HERO,
+      // Espejado SÓLO cuando está quieto hablando: el sprite mira a la derecha y el héroe
+      // frena a su IZQUIERDA, así que sin espejar le habla al vacío. Pero cuando CAMINA va
+      // hacia la derecha, y espejarlo ahí lo haría caminar de espaldas.
+      !walking && INTRO_SCENE.PENGUIN_FACES_HERO,
+      INTRO_SCENE.GROUND_Y + penguinHop,
     )
   }
 
@@ -102,31 +145,17 @@ export const drawIntroScene = (engine) => {
   // 3. Hint de saltear (esquina superior derecha, no tapa personajes)
   drawTextOutlined(ctx, INTRO_SCENE.SKIP_HINT, LAYOUT.W - 70, 20, 9, '#9fb6d8')
 
-  // 4. Caja de diálogo ARRIBA con efecto typewriter
+  // 4. Caja de diálogo ARRIBA con efecto typewriter.
+  // El dibujado vive en drawDialogue.drawTypedDialogue, compartido con el briefing: la
+  // caja tipeada es el mismo widget en las dos escenas.
   if (intro.step === INTRO_STEPS.TALK && intro.line < INTRO_LINES.length) {
     const line = INTRO_LINES[intro.line]
-    const { w: dw, h: dh } = LAYOUT.DIALOGUE
-    const dx = (LAYOUT.W - dw) / 2
-    const dy = 6
-    if (IMG.dlg) ctx.drawImage(IMG.dlg, dx, dy, dw, dh)
-    drawText(ctx, line.speaker, dx + 80, dy + 16, 9, '#f5e6c8')
-
-    // Typewriter: envolver PRIMERO, revelar DESPUÉS sobre líneas ya envueltas
-    const revealedChars = Math.floor(intro.revealTime * INTRO_SCENE.REVEAL_CHARS_PER_SEC)
-    const wrappedLines = wrapText(line.text, 40)
-    let charsLeft = revealedChars
-    wrappedLines.forEach((ln, i) => {
-      if (charsLeft <= 0) return
-      const visible = ln.slice(0, charsLeft)
-      charsLeft -= ln.length
-      drawText(ctx, visible, LAYOUT.W / 2, dy + 46 + i * 16, 12, '#4a3520')
+    drawTypedDialogue(engine, {
+      speaker: line.speaker,
+      text: line.text,
+      revealedChars: Math.floor(intro.revealTime * INTRO_SCENE.REVEAL_CHARS_PER_SEC),
+      top: true,
     })
-
-    // Mostrar "▼ ESPACIO" solo cuando la línea está completa
-    const isComplete = revealedChars >= line.text.length
-    if (isComplete && Math.floor(G.time * 2) % 2 === 0) {
-      drawText(ctx, '▼ ESPACIO', dx + dw - 52, dy + dh - 14, 8, '#8a6d3f')
-    }
   }
 
   // 5. Negro del corte. Va ÚLTIMO y tapa todo, incluido el hint de saltear: es un corte

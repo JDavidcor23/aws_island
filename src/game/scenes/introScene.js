@@ -1,5 +1,5 @@
 import { INTRO_SCENE, INTRO_STEPS, INTRO_LINES } from '../../constants/INTRO_SCENE'
-import { startRound } from '../battle/battleLogic'
+import { startBriefing } from './briefingScene'
 import { sfxService } from '../../services/sfx.service'
 
 // Inicialización perezosa: el estado vive en G.intro, NO en variable de módulo.
@@ -115,15 +115,38 @@ export const updateIntroScene = (engine, dt) => {
       break
     }
 
-    case INTRO_STEPS.WALK_OUT:
-      intro.heroX += INTRO_SCENE.WALK_SPEED * dt
-      intro.walkTime += dt
-      if (intro.heroX >= INTRO_SCENE.HERO_EXIT_X) {
-        startRound(engine)
+    case INTRO_STEPS.WALK_OUT: {
+      // Se van los DOS. El pingüino acaba de decir "Vení, que te lo muestro una vez" y
+      // antes se quedaba clavado en PENGUIN_X mientras el héroe salía solo: el jugador se
+      // queda esperando a que arranque el que lo invitó.
+      //
+      // Los dos arrancan con retardos distintos, leídos de stepTime (que goToStep puso en
+      // cero al entrar acá). El mentor primero, el héroe después: el que guía va adelante y
+      // el que sigue reacciona. Arrancando los dos en el mismo frame parece que los movió
+      // la misma palanca.
+      const { PENGUIN_WALK } = INTRO_SCENE
+      if (intro.stepTime >= PENGUIN_WALK.START_DELAY && intro.penguinX < PENGUIN_WALK.EXIT_X) {
+        intro.penguinX += PENGUIN_WALK.SPEED * dt
+        intro.penguinWalkTime += dt
       }
+      if (intro.stepTime >= PENGUIN_WALK.HERO_START_DELAY) {
+        intro.heroX += INTRO_SCENE.WALK_SPEED * dt
+        intro.walkTime += dt
+      }
+      // El corte lo sigue disparando el HÉROE, no el pingüino: es el personaje del jugador.
+      // El pingüino ya salió de cuadro antes (va más rápido y su EXIT_X es mayor).
+      if (intro.heroX >= INTRO_SCENE.HERO_EXIT_X) startBriefing(engine)
       break
+    }
   }
 }
+
+// ¿El mentor está caminando ahora mismo? Lo consume drawIntroScene para elegir entre el
+// ciclo de caminata y los frames de habla. Vive acá y no en el draw porque la condición es
+// de la sub-máquina: el draw no tiene por qué saber qué significa START_DELAY.
+export const penguinIsWalking = (intro) =>
+  intro.step === INTRO_STEPS.WALK_OUT &&
+  intro.stepTime >= INTRO_SCENE.PENGUIN_WALK.START_DELAY
 
 // Se llama desde el caso INTRO de advance() cuando el jugador aprieta ESPACIO
 export const advanceIntroScene = (engine) => {
@@ -164,5 +187,9 @@ export const advanceIntroScene = (engine) => {
   }
 }
 
-// Saltear: arranca el combate ya
-export const skipIntroScene = (engine) => startRound(engine)
+// Saltear con T: se salta la llegada, la caminata y las seis líneas del mentor.
+// Cae en el BRIEFING y NO directo al primer problema: el briefing es lo único que le dice
+// al jugador contra QUÉ pelea y que las cartas son la respuesta. Saltear la intro es "ya
+// sé la historia", no "tirame a una pelea que no entiendo". Son dos pantallas de texto y
+// se avanzan con ESPACIO.
+export const skipIntroScene = (engine) => startBriefing(engine)

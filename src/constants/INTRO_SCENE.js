@@ -25,6 +25,8 @@ export const INTRO_SCENE = {
   INITIAL: {
     step: INTRO_STEPS.BOAT_IN,
     heroX: -40,   // = WALK_START_X. Literal porque INITIAL se define antes que la clave.
+    penguinX: 250,      // = PENGUIN_X. Literal por el mismo motivo que heroX.
+    penguinWalkTime: 0, // reloj propio del ciclo de caminata del mentor
     line: 0,
     walkTime: 0,
     revealTime: 0,
@@ -68,6 +70,43 @@ export const INTRO_SCENE = {
   WALK_SPEED: 78,       // px por segundo
   WALK_FRAME_DURATION: 0.1,   // segundos por frame -> 10 fps
   WALK_FRAME_COUNT: 6,
+
+  // --- el mentor caminando ---
+  // El pingüino cierra su última línea con "Vení, que te lo muestro una vez" y hasta ahora
+  // se quedaba CLAVADO en PENGUIN_X mientras el héroe se iba caminando solo. El jugador se
+  // queda esperando a que arranque el que lo invitó: es el único personaje del juego que
+  // pide que lo sigas y no se mueve.
+  PENGUIN_WALK: {
+    // Un poco MÁS rápido que el héroe (78) y no igual: el que guía tiene que ir adelante.
+    // Con la misma velocidad la distancia entre los dos queda congelada en los 100 px que
+    // ya tenían al hablar, y eso se lee como dos personajes arrastrados por la cámara, no
+    // como uno siguiendo al otro.
+    SPEED: 88,
+    // 8 fps contra los 10 del héroe. Un pingüino da pasos más cortos y más torpes; a 10
+    // fps con 4 frames el ciclo se ve nervioso.
+    FRAME_DURATION: 0.125,
+    FRAME_COUNT: 4,
+    // Cuánto espera el pingüino desde que termina de hablar hasta arrancar a caminar.
+    // No es cosmético: es el beat que hace que se lea "te dijo algo Y ENTONCES se dio la
+    // vuelta y salió". Arrancando los dos en el mismo frame parece que los empujó la misma
+    // palanca.
+    START_DELAY: 0.25,
+    // El héroe arranca después del pingüino. Mismo motivo, del otro lado: el que sigue
+    // reacciona, no adivina.
+    HERO_START_DELAY: 0.55,
+    // Sale de pantalla por la derecha. 700 = HERO_EXIT_X: los dos se van del cuadro y el
+    // corte a la arena pasa cuando el HÉROE llega, así que el pingüino ya no está.
+    EXIT_X: 760,
+
+    // --- waddle de emergencia, para cuando penguin_walk_N no cargó ---
+    // Con los 4 frames reales esto no se usa. Sin ellos, el pingüino igual tiene que
+    // CAMINAR: quedarse quieto es exactamente el bug que vinimos a arreglar, y un asset
+    // que falta no puede devolvernos ahí. Se alternan los dos frames de habla (aleta
+    // arriba / aleta abajo) y se le suma un rebote vertical, que a 8 fps se lee como un
+    // pingüino contoneándose.
+    FALLBACK_HOP_AMP: 2.5,
+    FALLBACK_HOP_FREQ: 8.4,   // ~2 rebotes por ciclo de 4 frames a FRAME_DURATION
+  },
 
   PENGUIN_TALK_FRAME_DURATION: 0.18,   // alterna penguinTalk1 / penguinTalk2
 
