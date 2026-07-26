@@ -7,6 +7,7 @@ import { drawBoss, drawHero } from './drawScene'
 import { drawDialogue } from './drawDialogue'
 import { drawText, drawTextOutlined } from './textHelpers'
 import { drawIntroScene } from './drawIntroScene'
+import { drawFinisher } from './drawFinisher'
 import { drawRematchIntroScreen, drawTutorialClearScreen } from './drawPhaseScreens'
 
 // Pantallas y overlays: título, diálogos, remate, victoria y derrota.
@@ -72,31 +73,6 @@ export const drawFinishLineScreen = (engine) => {
   drawDialogue(engine, 'HÉROE', UI_TEXTS.HERO_FINISHER)
 }
 
-export const drawFinishAnimScreen = (engine) => {
-  const { ctx, G } = engine
-  // nube gigante creciendo detrás del héroe
-  const growth = Math.min(1, G.t / 1.2)
-  ctx.globalAlpha = 0.85 * growth
-  ctx.fillStyle = '#ffffff'
-  const cx = LAYOUT.HERO.x + 40
-  const cy = LAYOUT.HERO.y - 120 - growth * 30
-  const R = 30 + growth * 55
-  const puffs = [
-    [0, 0, 1],
-    [-1.1, 0.25, 0.7],
-    [1.1, 0.25, 0.75],
-    [-0.5, -0.45, 0.65],
-    [0.55, -0.5, 0.6],
-  ]
-  for (const [ox, oy, scale] of puffs) {
-    ctx.beginPath()
-    ctx.arc(cx + ox * R, cy + oy * R, R * scale, 0, Math.PI * 2)
-    ctx.fill()
-  }
-  ctx.globalAlpha = 1
-  drawTextOutlined(ctx, '☁ LA NUBE RESPONDE ☁', LAYOUT.W / 2, 40, 16, '#ffffff')
-}
-
 export const drawVictoryScreen = (engine) => {
   const { ctx, IMG, G, effects } = engine
   drawHero(engine)
@@ -117,8 +93,13 @@ export const drawVictoryScreen = (engine) => {
 
 export const drawDefeatScreen = (engine) => {
   const { ctx, G } = engine
-  ctx.fillStyle = 'rgba(10,4,4,0.72)'
+  // 0.62 y no 0.72: el héroe caído es lo que hay que VER en esta pantalla, y el velo lo
+  // dejaba al 28%. Igual se lo vuelve a dibujar encima del velo — GameEngine ya lo pintó
+  // debajo, y ese orden lo tapa. Es el mismo criterio que el panel de carta, que va al
+  // final de todo justamente para que nada le caiga encima.
+  ctx.fillStyle = 'rgba(10,4,4,0.62)'
   ctx.fillRect(0, 0, LAYOUT.W, LAYOUT.H)
+  drawHero(engine)
   drawTextOutlined(ctx, UI_TEXTS.DEFEAT_TITLE, LAYOUT.W / 2, 140, 18, '#ff8866')
   drawTextOutlined(ctx, UI_TEXTS.DEFEAT_STAKE, LAYOUT.W / 2, 168, 12, '#ffffff')
   if (Math.floor(G.time * 2) % 2 === 0) {
@@ -138,7 +119,7 @@ export const SCREEN_DRAWERS = {
   [GAME_STATES.TUTORIAL_CLEAR]: drawTutorialClearScreen,
   [GAME_STATES.REMATCH_INTRO]: drawRematchIntroScreen,
   [GAME_STATES.FINISH_LINE]: drawFinishLineScreen,
-  [GAME_STATES.FINISH_ANIM]: drawFinishAnimScreen,
+  [GAME_STATES.FINISH_ANIM]: drawFinisher,
   [GAME_STATES.VICTORY]: drawVictoryScreen,
   [GAME_STATES.DEFEAT]: drawDefeatScreen,
 }

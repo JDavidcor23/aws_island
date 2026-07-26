@@ -1,0 +1,118 @@
+/* Menú principal. Ver .kiro/specs/main-menu/reference.png
+   El menú vive dentro de un "stage" 16:9 con la MISMA fórmula de tamaño que
+   .game-canvas. No es un detalle estético: si el menú ocupara todo el viewport y el
+   canvas sólo un rectángulo de 16:9 en el medio, apretar JUGAR daría un salto de
+   layout. Ocupando el mismo rectángulo, el corte es limpio.
+   Y como el stage tiene la proporción del canvas, los porcentajes de acá abajo
+   reproducen la composición de reference.png en cualquier viewport. */
+.main-menu {
+  --stage-w: min(100vw, calc((100vh - 40px) * 16 / 9));
+  --cold: #7de0ff;
+  --hot: #ffd94a;
+  --dim: #9fb6d8;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  /* El requisito 6.1 pide el menú completo sin scroll */
+  overflow: hidden;
+  /* Fallback del requisito 6.3: si el PNG del fondo no carga, el <img> no pinta nada y
+     queda este color de la paleta. El menú sigue usable. */
+  background: #0b0b12;
+}
+
+/* --- stage --- */
+.main-menu__stage {
+  position: relative;
+  width: var(--stage-w);
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  /* Escala tipográfica atada al ancho del stage: todo lo de adentro va en `em`, así el
+     menú se ve idéntico a 768px y a 1920px en vez de agrandarse sólo el fondo. */
+  font-size: calc(var(--stage-w) / 46);
+}
+
+.main-menu__background {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;
+}
+
+/* Velo de la paleta sobre el fondo, para que el logo y las opciones tengan contraste */
+.main-menu__veil {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 6, 20, 0.55);
+}
+
+/* --- elenco --- */
+.main-menu__cast {
+  position: absolute;
+  bottom: 4%;
+  width: auto;
+  image-rendering: pixelated;
+  animation: main-menu-breathe 2.6s ease-in-out infinite alternate;
+}
+
+.main-menu__cast--hero {
+  left: 3%;
+  height: 27%;   /* la misma proporción que el héroe en la arena: 96px de 360 */
+}
+
+.main-menu__cast--penguin {
+  right: 4%;
+  height: 19%;
+  animation-delay: 0.7s;   /* desfasado: respirando al unísono parecen un solo objeto */
+}
+
+@keyframes main-menu-breathe {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-2%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .main-menu__cast { animation: none; }
+}
+
+/* --- contenido --- */
+.main-menu__content,
+.main-menu .menu-panel {
+  /* absolute y no relative: el contenido y el panel COEXISTEN en el DOM — el contenido se
+     oculta pero no se desmonta, para no perder el foco de la lista — así que tienen que
+     apilarse uno encima del otro y no en fila. */
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6em;
+  padding: 3% 4%;
+}
+
+.main-menu__content--hidden {
+  visibility: hidden;
+}
+
+.main-menu__logo {
+  /* El aire lo pone este margen y no un gap mayor: el subtítulo que iba acá debajo se
+     mudó a la placa de nivel, y sin él el logo quedaba pegado a los botones. */
+  margin-bottom: 1.1em;
+  width: 47%;
+  height: auto;
+  image-rendering: pixelated;
+}
+
+/* Los estilos de los botones se fueron a components/MenuList/: los comparte con el menú de
+   pausa. Estaban escritos dos veces con distinta pinta en cada menú, y así fue como el
+   juego terminó con dos lenguajes visuales para el MISMO control. */
+
+.main-menu__hint {
+  margin: 0.6em 0 0;
+  font-size: 0.68em;
+  color: var(--dim);
+}

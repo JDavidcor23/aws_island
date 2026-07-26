@@ -1,0 +1,63 @@
+/* Placa de nivel. Negro puro y nada más: la gracia de esta pantalla es que NO compite con
+   nada, así que no lleva fondo, ni marco, ni personajes. */
+.level-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background: #000000;
+  /* Misma escala tipográfica atada al viewport que el menú y el canvas */
+  font-size: calc(min(100vw, calc((100vh - 40px) * 16 / 9)) / 46);
+}
+
+.level-card__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5em;
+  text-align: center;
+  /* Aparece en vez de estar puesta de golpe: el corte seco desde el menú a un texto ya
+     dibujado se lee como un salto, no como una transición. */
+  animation: level-card-in 0.55s ease-out both;
+}
+
+.level-card__name {
+  margin: 0;
+  font-size: 2.6em;
+  letter-spacing: 0.22em;
+  /* letter-spacing empuja el texto a la derecha porque el espacio se agrega DESPUÉS del
+     último carácter. Este padding lo compensa para que quede realmente centrado. */
+  padding-left: 0.22em;
+  color: #7de0ff;
+}
+
+.level-card__subtitle {
+  margin: 0;
+  font-size: 1em;
+  letter-spacing: 0.08em;
+  padding-left: 0.08em;
+  color: #ffffff;
+}
+
+.level-card__hint {
+  position: absolute;
+  bottom: 8%;
+  margin: 0;
+  font-size: 0.68em;
+  color: #46506b;
+  animation: level-card-in 0.5s ease-out 1s both;
+}
+
+@keyframes level-card-in {
+  from { opacity: 0; transform: translateY(0.4em); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .level-card__content,
+  .level-card__hint {
+    animation-duration: 0.01s;
+  }
+}

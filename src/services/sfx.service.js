@@ -43,6 +43,17 @@ export const sfxService = {
   },
   fire: () => beep(300, 0.35, 'sawtooth', 0.07, -180),
   reflect: () => beep(520, 0.15, 'square', 0.07, 400),
+  // Carga del remate: un solo tono que sube durante toda la carga. Es la única señal de
+  // audio LARGA del juego, y eso es a propósito — avisa que lo que viene no es una ronda
+  // más. Dura lo mismo que FINISHER.CHARGE_DURATION; si tuneás una, tuneá la otra.
+  charge: () => beep(110, 1.4, 'sawtooth', 0.05, 520),
+  // Disparo: dos capas, la grave para el cuerpo y la aguda para el filo.
+  blast: () => {
+    beep(420, 0.9, 'sawtooth', 0.11, -340)
+    beep(1100, 0.5, 'square', 0.05, -700)
+  },
+  // Oleaje: lo más suave del juego. Es ambiente, no un evento — si se nota, está mal.
+  wave: () => beep(70, 0.6, 'sine', 0.03, 25),
   // Tecla de máquina de escribir: cortísimo, agudo y MUY bajo de volumen.
   // Se dispara varias veces por segundo mientras corre el typewriter, así que
   // cualquier cosa más larga o más fuerte que esto deja de ser textura y molesta.

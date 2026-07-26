@@ -3,7 +3,7 @@ import { CARDS } from '../../constants/CARDS'
 import { COMBAT_PACING } from '../../constants/COMBAT_PACING'
 import { LAYOUT } from '../../constants/LAYOUT'
 import { PHASE_CONFIG } from '../../constants/PHASES'
-import { currentRound } from '../battle/battleLogic'
+import { currentRound, isCardLocked } from '../battle/battleLogic'
 import { drawText, drawTextOutlined } from './textHelpers'
 
 // Desplazamiento vertical de la carta seleccionada.
@@ -65,7 +65,10 @@ export const drawCards = (engine) => {
   for (let i = 0; i < 4; i++) {
     const id = G.cards[i]
     const isSelected = i === G.sel
-    const isUsed = G.wrong.has(id)
+    // Una carta descartada y una bloqueada por la fase se dibujan IGUAL: las dos son
+    // "no la podés jugar", y darles dos aspectos distintos obligaría al jugador a aprender
+    // dos vocabularios visuales para la misma cosa.
+    const isUsed = G.wrong.has(id) || isCardLocked(G, id)
     const cx = x0 + i * (w + gap)
     const cy = y - (isSelected ? SELECTED_LIFT : 0) + Math.sin(G.time * 2 + i) * 1.5
 
@@ -99,12 +102,30 @@ export const drawCards = (engine) => {
     }
     ctx.globalAlpha = isUsed ? 0.3 : 1
     if (IMG[id]) ctx.drawImage(IMG[id], Math.round(cx), Math.round(cy), w, h)
+
+    // El número va DENTRO de la placa del arte, que hasta ahora estaba vacía. Es lo único
+    // que entra legible ahí (un carácter en ~48 px) y además es lo correcto: la placa
+    // termina funcionando como la tecla impresa en la carta, que es lo que el jugador
+    // aprieta. Antes flotaba arriba de la carta y la placa quedaba como un hueco.
+    //
+    // drawText y no drawTextOutlined: la placa es crema (luminancia ~215), así que el
+    // número va oscuro y el contorno negro de 3 px sólo ensuciaría la placa.
+    // Mismo marrón que el texto sobre la caja de diálogo, que es la otra superficie clara
+    // del juego.
+    // Va DENTRO del bloque de alpha: si la carta está descartada, su número también.
+    drawText(ctx, String(i + 1), cx + w / 2, cy + h * LAYOUT.CARD.plateY, 9, '#4a3520')
     ctx.globalAlpha = 1
 
-    drawTextOutlined(ctx, String(i + 1), cx + w / 2, cy - 10, 10, isSelected ? '#ffd94a' : '#cfd8ea')
-    // nombre SIEMPRE legible bajo la carta, alternando altura para no chocar
+    // Nombre bajo la carta, todos a la MISMA altura. El escalonado `(i % 2) * 11` que
+    // estaba acá era un parche a que el paso de carta (74 px) era menor que la etiqueta
+    // más larga (77 px); con gap 24 el paso es 82 y ya no hace falta.
+    //
+    // La Y sale de LAYOUT.CARD.y y no de cy a propósito: cy trae el bobbing senoidal, que
+    // está desfasado por carta. Sobre una línea compartida eso se lee como temblequeo. El
+    // lift de selección SÍ se aplica, porque la etiqueta es parte de la carta.
     const labelColor = isUsed ? '#777' : isSelected ? '#ffd94a' : '#ffffff'
-    drawTextOutlined(ctx, CARDS[id].label, cx + w / 2, cy + h + 10 + (i % 2) * 11, 8, labelColor)
+    const labelY = y - (isSelected ? SELECTED_LIFT : 0) + h + LAYOUT.CARD.labelGap
+    drawTextOutlined(ctx, CARDS[id].label, cx + w / 2, labelY, 8, labelColor)
 
     // Badge '?' — encima de la imagen, atenuado si la carta está descartada.
     // Y del badge: aplica el lift de selección pero NO el bobbing senoidal,

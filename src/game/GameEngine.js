@@ -1,11 +1,14 @@
 import { GAME_STATES } from '../constants/GAME_STATES'
 import { LAYOUT } from '../constants/LAYOUT'
+import { MUSIC } from '../constants/MUSIC'
 import { PHASE_CONFIG, PHASES } from '../constants/PHASES'
 import { TIMING } from '../constants/TIMING'
 import { assetsService } from '../services/assets.service'
+import { musicService } from '../services/music.service'
 import { sfxService } from '../services/sfx.service'
-import { advance, closeCardInfo, confirmCardInfo, endRound, needsExplain, openCardInfo, pickCard, timingPress, updateChooseTimer } from './battle/battleLogic'
+import { advance, closeCardInfo, confirmCardInfo, endRound, isCardPlayable, needsExplain, nextPlayableIndex, openCardInfo, pickCard, timingPress, updateChooseTimer } from './battle/battleLogic'
 import { updateAttack } from './battle/attack'
+import { finisherDone, updateFinisher } from './battle/finisher'
 import { updateIntroScene, skipIntroScene } from './scenes/introScene'
 import { createEffects } from './fx/effects'
 import { drawBackground, drawBoss, drawHero, drawParticles } from './render/drawScene'
@@ -26,6 +29,11 @@ const NO_HUD_STATES = [
   GAME_STATES.INTRO,
   GAME_STATES.TUTORIAL_CLEAR,
   GAME_STATES.REMATCH_INTRO,
+  // El remate es una cinemática y va sin UI. No es sólo estética: el cartel del remate
+  // choca contra el nombre del jefe en su barra de vida, y la barra especial llena
+  // mientras el jefe explota no informa nada. La explosión ES el feedback.
+  GAME_STATES.FINISH_LINE,
+  GAME_STATES.FINISH_ANIM,
   GAME_STATES.DEFEAT,
   GAME_STATES.VICTORY,
 ]
@@ -71,14 +79,23 @@ const createInitialState = () => ({
   flashAlpha: 0,
   bossHit: 0,
   bossGone: 0,
+  // Sub-máquinas de escena. Nacen en null y las inicializa su propio módulo: así reset()
+  // las borra sin que este archivo tenga que saber qué campos tienen adentro.
+  intro: null,
+  finisher: null,
 })
 
 export class GameEngine {
-  constructor(canvas, { onScreenChange, initialState } = {}) {
+  constructor(canvas, { onScreenChange, onPauseRequest, initialState } = {}) {
     this.canvas = canvas
     this.ctx = canvas.getContext('2d')
     this.ctx.imageSmoothingEnabled = false
     this.onScreenChange = onScreenChange
+    // Aviso discreto de "el jugador apretó ESC". El motor NO dibuja el menú de pausa ni
+    // sabe que existe: sólo avisa, igual que con onScreenChange. El overlay es DOM porque
+    // una de sus opciones es volver al menú principal, y eso es estado de React.
+    this.onPauseRequest = onPauseRequest
+    this.paused = false
     // Pantalla en la que arranca el motor. El menú entra directo a INTRO para que
     // el jugador no vea dos pantallas de título seguidas.
     this.initialState = initialState ?? GAME_STATES.TITLE
@@ -99,6 +116,9 @@ export class GameEngine {
     if (images.boss) this.IMG.bossWhite = assetsService.makeWhiteSprite(images.boss)
     this.IMG.glowRed = assetsService.makeGlowSprite('rgb(255,68,51)', 24)
     this.IMG.glowCyan = assetsService.makeGlowSprite('rgb(125,224,255)', 24)
+    // Halo blanco: lo usan las volutas de la nube del remate. Con círculos de borde duro
+    // la nube se leía como tres pelotas planas pegadas en el cielo.
+    this.IMG.glowWhite = assetsService.makeGlowSprite('rgb(255,255,255)', 24)
     this.setState(this.initialState)
     this.lastTs = performance.now()
     this.rafId = requestAnimationFrame(this.frame)
@@ -152,7 +172,18 @@ export class GameEngine {
   handleKeyDown = (e) => {
     const { G } = this
     if (G.state === GAME_STATES.LOAD) return
+    // En pausa el motor se desconecta del teclado por completo: el overlay de pausa tiene
+    // su propio listener y es el único que manda. Sin este corte, las flechas y el ESPACIO
+    // seguirían jugando la partida por debajo del menú.
+    if (this.paused) return
     const key = e.key
+    // El mute se atiende antes que todo lo demás y en cualquier pantalla: es un control de
+    // la aplicación, no una acción del juego. Está acá y también en useMainMenu porque son
+    // los dos únicos lugares con listener de teclado, y no vale la pena un tercero.
+    if (key === MUSIC.MUTE_KEY || key === MUSIC.MUTE_KEY.toUpperCase()) {
+      musicService.toggleMute()
+      return
+    }
     if (key === 'r' || key === 'R') {
       this.reset()
       return
@@ -183,16 +214,26 @@ export class GameEngine {
       }
       return
     }
+    // ESC abre la pausa, pero SÓLO acá abajo: arriba el bloque del panel de carta ya se
+    // quedó con el ESC para cerrarse. Ese orden importa — si la pausa se atendiera antes,
+    // el jugador que abre una ficha y aprieta ESC para cerrarla se comería el menú de
+    // pausa con la ficha todavía abierta debajo.
+    if (key === 'Escape') {
+      if (this.onPauseRequest) this.onPauseRequest()
+      return
+    }
     if (G.state === GAME_STATES.CHOOSE) {
       if (key === 'i' || key === 'I') { openCardInfo(this, G.sel); return }
       if (key >= '1' && key <= '4') {
         G.sel = Number(key) - 1
         pickCard(this, G.sel)
       } else if (key === 'ArrowLeft') {
-        G.sel = (G.sel + 3) % 4
+        // Las flechas SALTEAN las cartas no jugables. Si se pararan encima, el jugador
+        // vería el cursor sobre una carta apagada y el ESPACIO no haría nada.
+        G.sel = nextPlayableIndex(G, G.sel, -1)
         sfxService.select()
       } else if (key === 'ArrowRight') {
-        G.sel = (G.sel + 1) % 4
+        G.sel = nextPlayableIndex(G, G.sel, 1)
         sfxService.select()
       } else if (key === 'Enter' || key === ' ') {
         pickCard(this, G.sel)
@@ -250,15 +291,31 @@ export class GameEngine {
     if (G.state !== GAME_STATES.CHOOSE) return
     const { x, y } = this.canvasCoords(e)
     const index = cardIndexAt(x, y)
-    if (index >= 0 && index !== G.sel) {
+    // Mismo criterio que las flechas: el mouse tampoco deja la selección sobre una carta
+    // que no se puede jugar. Pasar por encima de una bloqueada no mueve nada.
+    if (index >= 0 && index !== G.sel && isCardPlayable(G, G.cards[index])) {
       G.sel = index
       sfxService.select()
     }
   }
 
   // ---------- Loop ----------
+  setPaused(paused) {
+    // lastTs se resetea al despausar y NO al pausar: si no, el primer frame después de la
+    // pausa recibe un dt del tamaño de todo el rato que estuvo pausado. MAX_DT lo acota a
+    // 50 ms, así que no explota, pero igual se ve como un salto.
+    if (!paused) this.lastTs = performance.now()
+    this.paused = paused
+  }
+
   frame = (ts) => {
     if (this.destroyed) return
+    // El rAF sigue vivo en pausa pero no se actualiza ni se dibuja: el canvas se queda con
+    // el último frame pintado, que es justo lo que se quiere ver detrás del menú.
+    if (this.paused) {
+      this.rafId = requestAnimationFrame(this.frame)
+      return
+    }
     const dt = Math.min(MAX_DT, (ts - this.lastTs) / 1000 || 0.016)
     this.lastTs = ts
     this.update(dt)
@@ -298,21 +355,11 @@ export class GameEngine {
       else endRound(this)
     }
 
+    // El remate es una sub-máquina propia (CHARGE -> FIRE) y se lleva TODO lo que antes
+    // estaba acá inline: el bossGone, las explosiones y su ritmo. Ver game/battle/finisher.
     if (G.state === GAME_STATES.FINISH_ANIM) {
-      G.bossGone = Math.min(1, G.t / TIMING.FINISH_BREAK_DURATION)
-      if (G.t % 0.28 < dt && G.bossGone < 0.9) {
-        effects.emit(
-          LAYOUT.BOSS.x + (Math.random() - 0.5) * 140,
-          LAYOUT.BOSS.y + (Math.random() - 0.5) * 120,
-          18,
-          ['#ff9d3b', '#ffdd55', '#888888', '#ff5533'],
-          160,
-          0.9,
-        )
-        G.shake = 9
-        sfxService.boom()
-      }
-      if (G.t > TIMING.FINISH_TOTAL_DURATION) {
+      updateFinisher(this, dt)
+      if (G.finisher && finisherDone(G.finisher)) {
         this.flash('#ffffff', 1)
         this.setState(GAME_STATES.VICTORY)
         sfxService.perfect()

@@ -3,8 +3,18 @@ export const UI_TEXTS = {
   // La única línea del héroe en todo el juego. Con la premisa del novato, estas cuatro
   // palabras son su arco completo. No se toca.
   HERO_FINISHER: 'Encontré una forma mejor.',
+  // Cartel del remate. Sigue diciendo que la que responde es la NUBE y no el héroe: el
+  // gesto es un Kamehameha, pero la premisa del juego es que él no gana a golpes. Estaba
+  // hardcodeado en drawScreens; vive acá porque ahora lo pinta drawFinisher.
+  FINISHER_BANNER: '☁ LA NUBE RESPONDE ☁',
   EXPLAIN_HIT_PREFIX: '¡ESO! ',
   EXPLAIN_MISS_PREFIX: '¡La carta era la correcta, pero afiná ese timing! ',
+
+  // La lección de la revancha, la versión que NO frena. Es un flotante que tiene que
+  // leerse de un vistazo mientras arranca el problema siguiente, así que dice sólo qué
+  // carta era y contra qué sirve. Corto a propósito: si necesita dos renglones, ya es una
+  // pantalla de explicación y volvimos al problema que veníamos a resolver.
+  MISTAKE_HINT_PREFIX: 'Era ',
 
   // Bisagra entre las dos peleas: el jefe cae, se reinicia, y lo que viene es en serio.
   TUTORIAL_CLEAR_SPEAKER: 'MENTOR 🐧',
@@ -47,7 +57,7 @@ export const UI_TEXTS = {
 export const SCREEN_HINTS = {
   LOAD: 'Cargando assets...',
   TITLE: 'ESPACIO para comenzar',
-  BATTLE: 'ESPACIO avanza y bloquea · 1-4 o clic elige carta · R reinicia',
+  BATTLE: 'ESPACIO avanza y bloquea · 1-4 elige carta · I ficha · ESC pausa · M música',
   VICTORY: 'R para jugar de nuevo',
   DEFEAT: 'R para reintentar',
 }

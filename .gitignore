@@ -9,3 +9,14 @@ dist/
 .playwright-mcp/
 tmp/
 output/
+
+# Cache de Python
+__pycache__/
+*.pyc
+
+# Buzón de audio sin procesar. A diferencia del arte, el audio NO pasa por un pipeline:
+# public/assets/audio/ es una copia byte a byte de esto, sólo con los nombres limpios (los
+# originales traían espacios y un doble guión bajo). Versionar las dos copias serían 4,3 MB
+# para guardar los mismos tres archivos dos veces. Se versiona la que sirve el juego.
+# El mapeo nombre original -> pista está documentado en src/constants/MUSIC.js.
+assets/audio/

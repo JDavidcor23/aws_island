@@ -1,10 +1,23 @@
 import { LAYOUT } from '../../constants/LAYOUT'
+import { PauseMenu } from './PauseMenu'
 import { useGameCanvas } from './useGameCanvas.hook'
 
 import './GameCanvas.css'
 
-export const GameCanvas = ({ initialState }) => {
-  const { canvasRef } = useGameCanvas({ initialState })
+export const GameCanvas = ({ initialState, onExitToMenu }) => {
+  const { canvasRef, paused, resume, restart } = useGameCanvas({ initialState })
 
-  return <canvas ref={canvasRef} className="game-canvas" width={LAYOUT.W} height={LAYOUT.H} />
+  return (
+    <div className="game-canvas">
+      <canvas
+        ref={canvasRef}
+        className="game-canvas__surface"
+        width={LAYOUT.W}
+        height={LAYOUT.H}
+      />
+      {paused && (
+        <PauseMenu onResume={resume} onRestart={restart} onExit={onExitToMenu} />
+      )}
+    </div>
+  )
 }
