@@ -71,8 +71,16 @@ def trim_to_content(img):
     return img.crop(bbox)
 
 
-def resize(img, size, keep_aspect):
-    """Escala con NEAREST: es pixel art, cualquier interpolacion lo arruina."""
+def resize(img, size, keep_aspect, pad_bottom=None):
+    """Escala con NEAREST: es pixel art, cualquier interpolacion lo arruina.
+
+    pad_bottom: si se pasa, el contenido se ancla ABAJO dejando esos px de margen en vez
+    de centrarse verticalmente. Hace falta para los sprites que no son una figura de pie.
+    El motor dibuja todos los sprites del heroe en la misma caja de 96 px anclada en
+    LAYOUT.HERO, asi que la linea de piso es el borde inferior del lienzo: un cuerpo
+    TIRADO centrado en el lienzo queda flotando en el aire. Medido en hero_down_1: el
+    contenido caia en canvas y=311 contra y=336 de la pose de guardia, 25 px de vuelo.
+    """
     target_w, target_h = size
     if not keep_aspect:
         print(f"  resize: {img.size} -> {size} (estirado)")
@@ -88,8 +96,15 @@ def resize(img, size, keep_aspect):
         return scaled
 
     canvas = Image.new("RGBA", size, (0, 0, 0, 0))
-    canvas.paste(scaled, ((target_w - new_w) // 2, (target_h - new_h) // 2))
-    print(f"  resize: {img.size} -> {(new_w, new_h)} centrado en {size}")
+    offset_x = (target_w - new_w) // 2
+    if pad_bottom is None:
+        offset_y = (target_h - new_h) // 2
+        where = f"centrado en {size}"
+    else:
+        offset_y = target_h - new_h - pad_bottom
+        where = f"anclado abajo en {size} con {pad_bottom} px de margen"
+    canvas.paste(scaled, (offset_x, offset_y))
+    print(f"  resize: {img.size} -> {(new_w, new_h)} {where}")
     return canvas
 
 
@@ -167,6 +182,13 @@ def main():
         action="store_false",
         help="estirar al tamano exacto en vez de encajar sin deformar",
     )
+    parser.add_argument(
+        "--pad-bottom",
+        type=int,
+        default=None,
+        metavar="PX",
+        help="anclar el contenido abajo con PX de margen en vez de centrarlo vertical",
+    )
     args = parser.parse_args()
 
     try:
@@ -180,7 +202,7 @@ def main():
         img = chroma_key(img)
     if args.trim:
         img = trim_to_content(img)
-    img = resize(img.convert("RGBA"), args.size, args.keep_aspect)
+    img = resize(img.convert("RGBA"), args.size, args.keep_aspect, args.pad_bottom)
     img = quantize(img, args.colors)
     img.save(args.dest, optimize=True)
     print(f"OK {args.dest}  ({img.mode}, {os.path.getsize(args.dest) / 1024:.1f} KB)")
