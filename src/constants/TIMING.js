@@ -13,8 +13,14 @@ export const TIMING = {
   GOOD_DIST: 42,
 
   // recompensas de la barra especial (0..100)
+  // 4 bloqueos PERFECT llenan la barra exactamente: la revancha son 4 problemas, así
+  // que jugarla limpia = remate. Con GOOD en 12 hacían falta 9 bloqueos y el jugador
+  // quedaba dando vueltas en rondas extra sin entender qué se esperaba de él.
+  // GOOD en 20 pide 5 bloqueos: alcanzable, y PERFECT sigue siendo estrictamente mejor.
+  // Ninguna combinación llena la barra en menos de 4 rondas (el máximo por ronda es 25),
+  // así que el remate nunca se come contenido del juego.
   PERFECT_GAIN: 25,
-  GOOD_GAIN: 12,
+  GOOD_GAIN: 20,
   SPECIAL_MAX: 100,
 
   // duraciones de fases

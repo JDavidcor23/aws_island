@@ -1,4 +1,5 @@
 import { GAME_STATES } from '../../constants/GAME_STATES'
+import { PHASE_CONFIG } from '../../constants/PHASES'
 import { TIMING } from '../../constants/TIMING'
 import { BOSS_HEALTH, BOSS_HEALTH_VISIBLE_STATES } from '../../constants/BOSS_HEALTH'
 import { drawTextOutlined } from './textHelpers'
@@ -12,15 +13,28 @@ export const drawBossHealth = (engine) => {
   // Guarda: solo se dibuja en estados donde el jefe está en pantalla
   if (!BOSS_HEALTH_VISIBLE_STATES.includes(G.state)) return
 
-  // --- Calcular targetHp desde G.round ---
-  const chunksLost = Math.min(G.round, BOSS_HEALTH.SEGMENTS - 1)
-  let targetHp = 1 - chunksLost / BOSS_HEALTH.SEGMENTS
+  // --- Calcular targetHp: lo decide la fase, no la ronda ---
+  let targetHp
+  if (PHASE_CONFIG[G.phase].bossHpMirrorsSpecial) {
+    // En la revancha el especial ES la condición de victoria, así que la barra del jefe
+    // tiene que ser su espejo: cada bloqueo bueno le saca vida de verdad y se ve.
+    // Contando rondas no funcionaba: las rondas de la revancha ciclan sin límite hasta
+    // que el especial se llena, y `chunksLost` está topeado en SEGMENTS-1 — o sea que el
+    // jugador seguía bloqueando contra una barra congelada en 1/4, sin ninguna señal de
+    // estar avanzando. Con 4 bloqueos PERFECT la barra cae en cuatro tramos parejos,
+    // uno por bloqueo, que es exactamente lo que SEGMENTS: 4 promete.
+    targetHp = 1 - Math.min(1, G.special / TIMING.SPECIAL_MAX)
+  } else {
+    // En el tutorial no hay remate por especial: la barra cuenta problemas resueltos.
+    const chunksLost = Math.min(G.round, BOSS_HEALTH.SEGMENTS - 1)
+    targetHp = 1 - chunksLost / BOSS_HEALTH.SEGMENTS
+  }
 
   // --- Vaciado durante el remate ---
-  if (G.state === GAME_STATES.FINISH_ANIM) {
-    const progress = Math.min(1, G.t / TIMING.FINISH_BREAK_DURATION)
-    targetHp = (1 - progress) * (1 / BOSS_HEALTH.SEGMENTS)
-  }
+  // Objetivo 0 y nada más: el lerp arrastra la barra desde donde haya quedado. Forzar
+  // 1/SEGMENTS acá —como hacía antes— con el espejo del especial haría SUBIR la barra
+  // justo en el frame en que arranca el remate.
+  if (G.state === GAME_STATES.FINISH_ANIM) targetHp = 0
 
   // --- Lerp con init perezoso (en G para sobrevivir reinicio) ---
   if (G.bossHpDisplay === undefined) G.bossHpDisplay = 1

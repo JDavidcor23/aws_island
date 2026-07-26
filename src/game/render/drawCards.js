@@ -1,8 +1,22 @@
+import { CARD_INFO } from '../../constants/CARD_INFO'
 import { CARDS } from '../../constants/CARDS'
 import { COMBAT_PACING } from '../../constants/COMBAT_PACING'
 import { LAYOUT } from '../../constants/LAYOUT'
+import { PHASE_CONFIG } from '../../constants/PHASES'
 import { currentRound } from '../battle/battleLogic'
-import { drawTextOutlined } from './textHelpers'
+import { drawText, drawTextOutlined } from './textHelpers'
+
+// Desplazamiento vertical de la carta seleccionada.
+// Nombrado acá porque lo usan tanto drawCards() como cardInfoBadgeAt().
+const SELECTED_LIFT = 10
+
+// Brillo guía sobre la carta correcta. Vive durante todo el tutorial y se apaga en la
+// revancha (lo decide highlightAnswer en PHASE_CONFIG, no la ronda).
+// PULSE_SPEED y BOB_AMP son puramente visuales: no tienen significado fuera de esta pantalla.
+const GUIDE_COLOR    = '#ffd94a'  // mismo dorado que el texto de carta seleccionada
+const GUIDE_PULSE_SPEED = 4      // radianes por segundo del sin() de alpha
+const GUIDE_BOB_AMP  = 5         // px de rebote de la flecha encima de la carta
+const GUIDE_ARROW    = '▼'       // mismo caracter que drawScreens.js usa en su indicador
 
 // Fila de cartas chicas abajo: la escena queda visible.
 // La selección se marca con marco + fondo tintado (nada de shadowBlur).
@@ -11,6 +25,25 @@ export const cardIndexAt = (x, y) => {
   for (let i = 0; i < 4; i++) {
     const cx = x0 + i * (w + gap)
     if (x >= cx - 4 && x <= cx + w + 4 && y >= cy - 14 && y <= cy + h + 16) return i
+  }
+  return -1
+}
+
+// Hit-test del badge '?'. Replica el lift de la selección igual que el dibujo.
+// Ignora el bobbing senoidal a propósito: el dibujo tampoco lo aplica al badge
+// (un affordance clickeable que se mueve es un affordance que se falla).
+// Margen de +2px sobre el radio: comodidad de puntería, no tapa ningún bug.
+export const cardInfoBadgeAt = (x, y, selectedIndex) => {
+  const { w, gap, x0, y: cy } = LAYOUT.CARD
+  const { r, dx, dy } = CARD_INFO.BADGE
+  const HIT_R = r + 2
+  for (let i = 0; i < 4; i++) {
+    const cx = x0 + i * (w + gap)
+    const bx = cx + dx
+    // Mismo cálculo que el dibujo: lift si está seleccionada, sin bobbing
+    const by = cy - (i === selectedIndex ? SELECTED_LIFT : 0) + dy
+    const dist = Math.sqrt((x - bx) ** 2 + (y - by) ** 2)
+    if (dist <= HIT_R) return i
   }
   return -1
 }
@@ -34,7 +67,26 @@ export const drawCards = (engine) => {
     const isSelected = i === G.sel
     const isUsed = G.wrong.has(id)
     const cx = x0 + i * (w + gap)
-    const cy = y + (isSelected ? -10 : 0) + Math.sin(G.time * 2 + i) * 1.5
+    const cy = y - (isSelected ? SELECTED_LIFT : 0) + Math.sin(G.time * 2 + i) * 1.5
+
+    // Brillo guía: todo el tutorial, solo sobre la carta correcta.
+    // Se dibuja ANTES del marco cyan para que la selección quede visible encima.
+    const cfg = PHASE_CONFIG[G.phase]
+    if (cfg.highlightAnswer && id === currentRound(G).ans) {
+      const alpha = 0.45 + 0.45 * Math.sin(G.time * GUIDE_PULSE_SPEED)
+      ctx.save()
+      ctx.globalAlpha = alpha
+      ctx.strokeStyle = GUIDE_COLOR
+      ctx.lineWidth = 3
+      ctx.beginPath()
+      ctx.roundRect(Math.round(cx - 5), Math.round(cy - 5), w + 10, h + 10, 6)
+      ctx.stroke()
+      ctx.globalAlpha = 1
+      ctx.restore()
+      // Flecha rebotante encima de la carta
+      const arrowY = Math.round(cy - 18 + Math.sin(G.time * GUIDE_PULSE_SPEED) * GUIDE_BOB_AMP)
+      drawTextOutlined(ctx, GUIDE_ARROW, Math.round(cx + w / 2), arrowY, 12, GUIDE_COLOR)
+    }
 
     if (isSelected && !isUsed) {
       ctx.fillStyle = 'rgba(125,224,255,0.28)'
@@ -53,15 +105,37 @@ export const drawCards = (engine) => {
     // nombre SIEMPRE legible bajo la carta, alternando altura para no chocar
     const labelColor = isUsed ? '#777' : isSelected ? '#ffd94a' : '#ffffff'
     drawTextOutlined(ctx, CARDS[id].label, cx + w / 2, cy + h + 10 + (i % 2) * 11, 8, labelColor)
+
+    // Badge '?' — encima de la imagen, atenuado si la carta está descartada.
+    // Y del badge: aplica el lift de selección pero NO el bobbing senoidal,
+    // para que el área de clic (cardInfoBadgeAt) y el dibujo siempre coincidan.
+    const { r, dx: bdx, dy: bdy } = CARD_INFO.BADGE
+    const { COLORS } = CARD_INFO
+    const badgeCx = Math.round(cx + bdx)
+    const badgeCy = Math.round(y - (isSelected ? SELECTED_LIFT : 0) + bdy)
+    ctx.save()
+    ctx.globalAlpha = isUsed ? 0.3 : 1
+    ctx.beginPath()
+    ctx.arc(badgeCx, badgeCy, r, 0, Math.PI * 2)
+    ctx.fillStyle = COLORS.badgeBg
+    ctx.fill()
+    ctx.strokeStyle = COLORS.badgeBorder
+    ctx.lineWidth = 1
+    ctx.stroke()
+    drawText(ctx, '?', badgeCx, badgeCy + 1, 9, COLORS.badgeText, 'center', true)
+    ctx.globalAlpha = 1
+    ctx.restore()
   }
 
-  // Timer visual: arco que se vacía (solo si la ronda tiene timer)
-  if (G.round >= COMBAT_PACING.FIRST_TIMED_ROUND) {
-    const remaining = Math.max(0, 1 - G.t / COMBAT_PACING.CHOOSE_TIME_LIMIT)
+  // Timer visual: arco que se vacía.
+  // Se dibuja SOLO si la fase tiene límite de tiempo (null = sin timer, como en TUTORIAL).
+  const limit = PHASE_CONFIG[G.phase].chooseTimeLimit
+  if (limit !== null) {
+    const remaining = Math.max(0, 1 - G.t / limit)
     const cx = LAYOUT.W / 2
     const cy = y - 34
     const radius = 14
-    const warn = G.t >= (COMBAT_PACING.CHOOSE_TIME_LIMIT - COMBAT_PACING.TIMEOUT_WARN_THRESHOLD)
+    const warn = G.t >= (limit - COMBAT_PACING.TIMEOUT_WARN_THRESHOLD)
     const visible = !warn || Math.floor(G.time * 4) % 2 === 0
 
     if (visible) {
@@ -78,7 +152,7 @@ export const drawCards = (engine) => {
       ctx.lineWidth = 4
       ctx.stroke()
       // Número de segundos restantes
-      const secs = Math.max(0, Math.ceil(COMBAT_PACING.CHOOSE_TIME_LIMIT - G.t))
+      const secs = Math.max(0, Math.ceil(limit - G.t))
       drawTextOutlined(ctx, String(secs), cx, cy + 1, 11, warn ? '#ff5544' : '#ffffff')
     }
   }

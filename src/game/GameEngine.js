@@ -1,15 +1,17 @@
 import { GAME_STATES } from '../constants/GAME_STATES'
 import { LAYOUT } from '../constants/LAYOUT'
+import { PHASE_CONFIG, PHASES } from '../constants/PHASES'
 import { TIMING } from '../constants/TIMING'
 import { assetsService } from '../services/assets.service'
 import { sfxService } from '../services/sfx.service'
-import { advance, pickCard, timingPress, updateChooseTimer } from './battle/battleLogic'
+import { advance, closeCardInfo, confirmCardInfo, endRound, needsExplain, openCardInfo, pickCard, timingPress, updateChooseTimer } from './battle/battleLogic'
 import { updateAttack } from './battle/attack'
 import { updateIntroScene, skipIntroScene } from './scenes/introScene'
 import { createEffects } from './fx/effects'
 import { drawBackground, drawBoss, drawHero, drawParticles } from './render/drawScene'
 import { drawHUD } from './render/drawHUD'
-import { cardIndexAt, drawCards, drawChosenCard } from './render/drawCards'
+import { cardIndexAt, cardInfoBadgeAt, drawCards, drawChosenCard } from './render/drawCards'
+import { drawCardInfo } from './render/drawCardInfo'
 import { drawAttack } from './render/drawAttack'
 import { drawLoadScreen, SCREEN_DRAWERS } from './render/drawScreens'
 
@@ -17,7 +19,26 @@ import { drawLoadScreen, SCREEN_DRAWERS } from './render/drawScreens'
 // NUNCA toca React por frame. Los cambios de pantalla se notifican con
 // onScreenChange (evento discreto) para que el shell React reaccione.
 const MAX_DT = 0.05
-const NO_HUD_STATES = [GAME_STATES.TITLE, GAME_STATES.INTRO, GAME_STATES.DEFEAT, GAME_STATES.VICTORY]
+// Las dos bisagras de fase van acá: en la antesala los corazones todavía no se
+// repusieron (eso lo hace beginRematch) y mostrar la vida vieja confunde.
+const NO_HUD_STATES = [
+  GAME_STATES.TITLE,
+  GAME_STATES.INTRO,
+  GAME_STATES.TUTORIAL_CLEAR,
+  GAME_STATES.REMATCH_INTRO,
+  GAME_STATES.DEFEAT,
+  GAME_STATES.VICTORY,
+]
+// Pantallas que pintan su propia escena completa de punta a punta.
+// Poner el jefe y el héroe de la arena debajo no era solo trabajo perdido: drawBoss
+// emite vapor ambiente en CADA frame, y drawParticles corre DESPUÉS de la escena, o
+// sea encima. Con INTRO fuera de esta lista, el vapor del jefe caía sobre la isla del
+// tutorial con gravedad y se leía como nieve — en el tutorial y en toda la intro.
+const OWN_SCENE_STATES = [
+  GAME_STATES.TITLE,
+  GAME_STATES.INTRO,
+  GAME_STATES.VICTORY,
+]
 const REACT_SCREENS = {
   [GAME_STATES.LOAD]: 'LOAD',
   [GAME_STATES.TITLE]: 'TITLE',
@@ -27,6 +48,11 @@ const REACT_SCREENS = {
 
 const createInitialState = () => ({
   state: GAME_STATES.LOAD,
+  phase: PHASES.TUTORIAL,
+  tutorialDone: false,
+  order: [0, 1, 2, 3],
+  infoCard: null,
+  infoSeen: new Set(),
   t: 0,
   time: 0,
   round: 0,
@@ -84,6 +110,7 @@ export class GameEngine {
   }
 
   setState(state) {
+    this.G.infoCard = null   // el panel es exclusivo de CHOOSE: cualquier transición lo descarta (trampa 6)
     this.G.state = state
     this.G.t = 0
     if (this.onScreenChange) {
@@ -101,10 +128,23 @@ export class GameEngine {
   }
 
   reset() {
+    // tutorialDone es el ÚNICO bit que sobrevive al reset: el que ya superó el
+    // tutorial no lo vuelve a jugar por apretar R (req 6.2).
+    const tutorialDone = this.G.tutorialDone
     this.G = createInitialState()
     this.effects.clear()
-    // Vuelve a donde arrancó, no a TITLE: si el jugador entró desde el menú,
-    // reiniciar no lo tiene que devolver a una pantalla que ya no se usa.
+    if (tutorialDone) {
+      this.G.tutorialDone = true
+      this.G.phase = PHASES.REMATCH
+      // Cae en la antesala y NO en startRound ni beginRematch: así beginRematch
+      // (el ESPACIO de esta pantalla) queda como el único lugar que inicializa
+      // corazones, especial y orden de problemas.
+      this.setState(GAME_STATES.REMATCH_INTRO)
+      return
+    }
+    // Sin tutorial superado vuelve a donde arrancó, no a TITLE: si el jugador
+    // entró desde el menú, reiniciar no lo tiene que devolver a una pantalla
+    // que ya no se usa.
     this.setState(this.initialState)
   }
 
@@ -121,7 +161,30 @@ export class GameEngine {
       skipIntroScene(this)
       return
     }
+    // R y el skip de la intro ya se atendieron arriba: de acá abajo el panel se queda con todo el input
+    if (G.infoCard) {
+      if (key === 'i' || key === 'I' || key === 'Escape') { closeCardInfo(this); return }
+      // En el tutorial el panel es el paso de confirmación, así que acá ESPACIO SÍ juega
+      // la carta. En la revancha no: ahí el panel es consulta voluntaria contra el reloj
+      // y confirmar desde él sería una trampa (el segundo ESPACIO de abrirlo jugaría solo).
+      // e.repeat es obligatorio: sin él, mantener ESPACIO abre el panel y el auto-repeat
+      // lo confirma en el mismo frame — nunca llegarías a leerlo.
+      if ((key === ' ' || key === 'Enter') && !e.repeat && PHASE_CONFIG[G.phase].openInfoOnPick) {
+        confirmCardInfo(this)
+        return
+      }
+      // 1-4 con el panel abierto: la MISMA carta la confirma, otra carta abre SU ficha.
+      // Sin esto, el que elige con el teclado apretaba '1', se le abría el panel, apretaba
+      // '1' otra vez y el panel se comía la tecla sin hacer nada.
+      if (key >= '1' && key <= '4' && PHASE_CONFIG[G.phase].openInfoOnPick) {
+        const index = Number(key) - 1
+        if (G.cards[index] === G.infoCard) confirmCardInfo(this)
+        else openCardInfo(this, index)
+      }
+      return
+    }
     if (G.state === GAME_STATES.CHOOSE) {
+      if (key === 'i' || key === 'I') { openCardInfo(this, G.sel); return }
       if (key >= '1' && key <= '4') {
         G.sel = Number(key) - 1
         pickCard(this, G.sel)
@@ -154,8 +217,20 @@ export class GameEngine {
   handleMouseDown = (e) => {
     const { G } = this
     if (G.state === GAME_STATES.LOAD) return
+    // Panel abierto: el clic resuelve el panel antes de cualquier otra cosa.
+    // En el tutorial JUEGA la carta que estás leyendo (el panel es el paso de
+    // confirmación); en la revancha solo cierra, como hasta ahora.
+    if (G.infoCard) {
+      if (PHASE_CONFIG[G.phase].openInfoOnPick) confirmCardInfo(this)
+      else closeCardInfo(this)
+      return
+    }
     if (G.state === GAME_STATES.CHOOSE) {
       const { x, y } = this.canvasCoords(e)
+      // Badge PRIMERO: su área queda dentro del rectángulo de cardIndexAt (trampa 3).
+      // Tercer argumento obligatorio: replica el lift de selección (trampa 5).
+      const badge = cardInfoBadgeAt(x, y, G.sel)
+      if (badge >= 0) { openCardInfo(this, badge); return }
       const index = cardIndexAt(x, y)
       if (index >= 0) {
         G.sel = index
@@ -170,6 +245,8 @@ export class GameEngine {
 
   handleMouseMove = (e) => {
     const { G } = this
+    // Con el panel abierto el mouse no cambia la selección por abajo
+    if (G.infoCard) return
     if (G.state !== GAME_STATES.CHOOSE) return
     const { x, y } = this.canvasCoords(e)
     const index = cardIndexAt(x, y)
@@ -204,8 +281,21 @@ export class GameEngine {
 
     if (G.state === GAME_STATES.CHOOSE) updateChooseTimer(this)
 
+    // Auto-avance de PROBLEM cuando la fase no pide input: en REMATCH el
+    // problema encadena solo, sin ESPACIO. Ya está vivo — beginRematch y reset()
+    // son los dos caminos que ponen la fase en REMATCH.
+    if (G.state === GAME_STATES.PROBLEM &&
+        !PHASE_CONFIG[G.phase].problemNeedsSpace &&
+        G.t > TIMING.PROBLEM_MIN_WAIT) {
+      this.setState(GAME_STATES.CHOOSE)
+    }
+
+    // Acá desaparecen las interrupciones de la revancha: si el jugador resolvió
+    // limpio no hay pantalla de explicación ni ESPACIO que apretar, endRound
+    // encadena directo al problema siguiente.
     if (G.state === GAME_STATES.RESOLVE && G.t > TIMING.RESOLVE_DURATION) {
-      this.setState(GAME_STATES.EXPLAIN)
+      if (needsExplain(G)) this.setState(GAME_STATES.EXPLAIN)
+      else endRound(this)
     }
 
     if (G.state === GAME_STATES.FINISH_ANIM) {
@@ -245,13 +335,14 @@ export class GameEngine {
       return
     }
 
-    if (G.state !== GAME_STATES.VICTORY && G.state !== GAME_STATES.TITLE) {
+    if (!OWN_SCENE_STATES.includes(G.state)) {
       drawBoss(this)
       drawHero(this)
     }
 
     if (G.state === GAME_STATES.CHOOSE) {
       drawCards(this)
+      // El panel NO se dibuja acá: es un modal y va al final de draw(). Ver abajo.
     } else if (G.state === GAME_STATES.TIMING) {
       drawChosenCard(this)
       drawAttack(this)
@@ -271,5 +362,13 @@ export class GameEngine {
       ctx.fillRect(0, 0, LAYOUT.W, LAYOUT.H)
       ctx.globalAlpha = 1
     }
+
+    // El panel de carta es un MODAL: va al final de TODO, después del HUD y del flash.
+    // Estaba pegado abajo de drawCards, y como después de ese punto todavía se dibujan
+    // las partículas, el HUD, la barra de vida del jefe y los textos flotantes, todo eso
+    // le caía ENCIMA del velo: la barra del jefe tapaba el título de la carta y el vapor
+    // del jefe caía adentro del recuadro. No era un problema de coordenadas, era de orden.
+    // Va fuera del ctx.restore() a propósito: un modal no tiembla con el shake.
+    if (G.state === GAME_STATES.CHOOSE && G.infoCard) drawCardInfo(this)
   }
 }

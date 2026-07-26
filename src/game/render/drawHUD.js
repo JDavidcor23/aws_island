@@ -36,8 +36,11 @@ export const drawHUD = (engine) => {
     const fillX = gx0 + (gx1 - gx0) * (G.special / TIMING.SPECIAL_MAX)
     ctx.fillStyle = 'rgba(8,10,28,0.82)'
     ctx.fillRect(Math.round(fillX), Math.round(gy0), Math.round(gx1 - fillX), Math.round(gy1 - gy0))
+    // '¡REMATE!' y no '¡MAX!': lo que importa no es que la barra esté llena, es qué
+    // pasa cuando lo está. Con '¡MAX!' el jugador no tenía cómo saber que él acababa
+    // de habilitar el golpe final.
     if (G.special >= TIMING.SPECIAL_MAX && Math.floor(G.time * 3) % 2 === 0) {
-      drawTextOutlined(ctx, '¡MAX!', barX + barW / 2, barY + barH / 2, 12, '#ffe98a')
+      drawTextOutlined(ctx, '¡REMATE!', barX + barW / 2, barY + barH / 2, 12, '#ffe98a')
     }
   }
 
