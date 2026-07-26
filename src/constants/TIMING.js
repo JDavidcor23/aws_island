@@ -26,8 +26,8 @@ export const TIMING = {
   // duraciones de fases
   PROBLEM_MIN_WAIT: 0.5,
   RESOLVE_DURATION: 0.75,
-  FINISH_BREAK_DURATION: 3.2,
-  FINISH_TOTAL_DURATION: 3.6,
+  // Las duraciones del remate se fueron a constants/FINISHER.js: ahora el remate es una
+  // sub-máquina de tres tiempos y sus números sólo tienen sentido juntos.
 
   // vida
   MAX_HEARTS: 4,

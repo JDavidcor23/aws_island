@@ -14,6 +14,20 @@ export const ASSETS_MANIFEST = {
   walk4: 'hero_walk_4.png',
   walk5: 'hero_walk_5.png',
   walk6: 'hero_walk_6.png',
+  // Sprites de combate: el héroe mirando al jefe. Ver .kiro/specs/hero-combat-anim/
+  heroStance1: 'hero_stance_1.png',
+  heroStance2: 'hero_stance_2.png',
+  heroCharge1: 'hero_charge_1.png',
+  heroCharge2: 'hero_charge_2.png',
+  heroFire: 'hero_fire_1.png',
+  // Derrota y victoria. Los dos empaquetados con --pad-bottom 5 para que apoyen en la MISMA
+  // línea de piso que las poses de pie: centrados en el lienzo quedaban flotando en el aire
+  // (medido: 25 px en el caso del cuerpo tirado).
+  heroDown: 'hero_down_1.png',
+  heroWin: 'hero_win_1.png',
+  // Llegada en barco. Ver .kiro/specs/intro-boat-arrival/
+  islandShore: 'scene_island_shore.png',
+  boat: 'boat.png',
   penguin: 'penguin_64.png',
   penguinTalk1: 'penguin_talk_1.png',
   penguinTalk2: 'penguin_talk_2.png',
