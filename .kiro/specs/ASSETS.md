@@ -2,6 +2,10 @@
 
 **Owner: Jorge.** Nadie más genera arte. Los specs referencian estos assets por número (`A-1`, `A-2`…).
 
+> 🧭 **Si sólo querés saber CÓMO se genera un asset**, el procedimiento corto está en
+> [`.kiro/steering/arte.md`](../steering/arte.md) — Kiro lo carga solo. Este archivo es el registro
+> largo: el prompt de cada asset, tal cual se usó, y qué salió mal en el camino.
+
 **Los cinco ya están generados, post-procesados y registrados.** Este documento queda como registro
 reproducible del pipeline.
 
@@ -48,6 +52,37 @@ python scripts/split_sheet.py sheet.png out_prefix --frames 2 --size 128x128 --c
 > altura** — el sprite salta al alternar frames. El script calcula la unión de los bounding boxes y recorta
 > todos con la misma ventana, anclando por abajo.
 
+### Tres herramientas más, agregadas con los sprites de combate (26/07)
+
+```bash
+# N archivos separados que son frames de una animacion: bbox UNION + recorte comun
+python scripts/pack_sprite_set.py --size 128x128 --colors 24 in1.png:out1.png in2.png:out2.png ...
+
+# un sprite que NO es una figura de pie: se ancla abajo en vez de centrarse
+python scripts/postprocess.py in.png out.png --size 128x128 --chroma --trim --pad-bottom 5
+
+# tapa un rectangulo de color liso que el generador deja en una esquina
+python scripts/patch_solid_block.py in.png out.png
+```
+
+> 🔴 **`pack_sprite_set.py` se solapa con `split_sheet.py` y es culpa de haber pedido mal el arte.**
+> Los dos calculan el bbox unión de un set y recortan todo con la misma ventana. La diferencia es la
+> entrada: `split_sheet` parte **una hoja horizontal**, `pack_sprite_set` toma **N archivos sueltos**.
+> Los cinco sprites de combate se pidieron como cinco archivos porque no se miró que `split_sheet` ya
+> existía. **Para el próximo set: pedí una hoja horizontal y usá `split_sheet.py`.** No hacen falta
+> dos herramientas para esto.
+>
+> Diferencia de comportamiento, por si importa: `split_sheet` ancla abajo con margen 0;
+> `pack_sprite_set` centra, y el anclado se pide aparte con `postprocess.py --pad-bottom`.
+
+**Por qué `--pad-bottom`.** El motor dibuja todos los sprites del héroe en la misma caja de 96 px anclada
+en `LAYOUT.HERO`, o sea que la línea de piso es el **borde inferior del lienzo**. Un cuerpo TIRADO
+centrado en su lienzo queda flotando: medido, `hero_down` flotaba **25 px** contra las poses de pie. Con
+`--pad-bottom 5`, guardia, derrota y victoria apoyan las tres en canvas `y=336`.
+
+**Por qué `patch_solid_block.py`.** Ver A-11 más abajo: pedirle al generador que una zona quede "oscura y
+vacía" para poner HUD encima puede devolver un rectángulo de color liso con bordes rectos.
+
 Destino final: `public/assets/art/_gameready/` y registrar la clave en `src/constants/ASSETS_MANIFEST.js`.
 
 ## Dirección de arte (aplica a TODOS los prompts)
@@ -75,6 +110,9 @@ Los cinco assets están en `public/assets/art/_gameready/` y **registrados** en
 | **A-8** | Panorámicas de la isla, par | `scene_island_before.png` · `scene_island_after.png` | 640×360 | `after` | victoria |
 | **A-9** | Nodo de la Isla 0, 2 estados | `island0_before.png` · `island0_after.png` | 112×96 | `island0Before` · `island0After` | `overworld` |
 | **A-10** | Arena del jefe · camino del tutorial | `scene_battle_arena.png` · `scene_island_path.png` | 640×360 | `arena` · `islandPath` | combate · `intro-tutorial` |
+| **A-11** | Costa de la isla desde el mar · bote | `scene_island_shore.png` · `boat.png` | 640×360 · 128×40 | `islandShore` · `boat` | `intro-boat-arrival` |
+| **A-12** | Poses de combate del héroe, 5 frames | `hero_stance_1/2` · `hero_charge_1/2` · `hero_fire_1` | 128×128 | `heroStance1/2` · `heroCharge1/2` · `heroFire` | `hero-combat-anim` |
+| **A-13** | Derrota y victoria del héroe | `hero_down_1.png` · `hero_win_1.png` | 128×128 | `heroDown` · `heroWin` | `hero-combat-anim` |
 
 > 🔴 **A-8, A-9 y A-10 salen del mismo concepto**: [`CONCEPTO_ISLA_0.md`](./CONCEPTO_ISLA_0.md). **Leelo antes de
 > regenerar cualquiera de los seis.** Los primeros assets se generaron con prompts independientes y el
@@ -355,6 +393,90 @@ Cuantizadas: **48 colores, 54–76 KB, entre −83% y −86% de peso.** El set e
       línea `🔒 Isla 1: EC2 — Próximamente...` **casi no se leen** sobre el fondo brillante. Comprobado con la
       imagen vieja: pasaba igual. El arreglo va en `drawScreens.js` (caja oscura translúcida detrás del texto,
       o subir el contorno) — **archivo del spec `intro-tutorial`**, así que lo decide su owner.
+
+---
+
+## A-11 · A-12 · A-13 — la llegada en barco y las poses del héroe
+
+Los prompts completos, tal cual se usaron, están en los scripts:
+
+| Script | Genera |
+|---|---|
+| [`scripts/gen_boat_scene.sh`](../../scripts/gen_boat_scene.sh) | A-11 · costa + bote, **y corre el post-proceso** |
+| [`scripts/gen_hero_combat.sh`](../../scripts/gen_hero_combat.sh) | A-12 · los 5 frames de combate, **y los empaqueta** |
+| [`scripts/gen_hero_down.sh`](../../scripts/gen_hero_down.sh) | A-13 · derrota |
+| [`scripts/gen_hero_win.sh`](../../scripts/gen_hero_win.sh) | A-13 · victoria |
+
+Los cuatro traen el historial de errores escrito en el encabezado. **Leelos antes de escribir un prompt
+nuevo de personaje** — ahí está la lección que costó tres corridas.
+
+### La lección de A-12: la referencia manda, los adjetivos de estilo la rompen
+
+| Intento | Qué se le pasó | Qué salió |
+|---|---|---|
+| 1 | descripción de texto, sin referencia | otro chico: proporción adolescente, sombreado con pliegues, sin el cuadradito naranja del pecho |
+| 2 | referencias adjuntas **+** lista larga de reglas de estilo ("colores planos", "dos tonos por material", "proporción chibi", "sin pliegues") | un muñeco de tubos con contorno grueso. Y encima interpretó "el cuadradito naranja del pecho" como cuadrados naranjas en los **puños** |
+| 3 | referencias adjuntas **+** prompt corto que sólo describe la pose | **en modelo** |
+
+> **Cuando hay imagen de referencia, el prompt tiene que hablar SOLO de la pose.** Los adjetivos de
+> estilo pelean contra la imagen y devuelven otro personaje. El estilo lo define el PNG.
+
+Referencias que se adjuntaron con `-i`: `06_hero_side_idle_1.png` (el personaje a resolución de
+generación) y `06_hero_walk_right_6_sheet.png` (proporciones en movimiento).
+
+Y un dato de textura: **lo chunky del pixel art del proyecto sale del downscale duro**, no del tamaño de
+generación. El original se generó a 1254 px y las hojas a 724 px por frame, y se bajaron a 128/64.
+Generar a 256 da demasiado detalle fino y se lee como otro personaje aunque el dibujo esté bien.
+
+### El artefacto de A-11: el rectángulo liso
+
+Al fondo de la costa se le pidió que la esquina superior derecha quedara "oscura y vacía" para poner el
+hint de saltear encima. Lo devolvió **literal**: un rectángulo de color liso `(35,29,44)` de 120×40 con
+bordes rectos, que en pantalla se lee como un tile que falta.
+
+`patch_solid_block.py` lo detecta por color modal desde la esquina y lo tapa clonando el bloque vecino
+de igual tamaño, **espejado en X** — pegarlo tal cual repite las mismas nubes a distancia fija y el ojo
+engancha el patrón enseguida.
+
+El prompt de `gen_boat_scene.sh` ya está corregido para no pedir zonas vacías por coordenadas ("que se
+funda con el cielo, sin caja ni panel"), pero el parche queda: es idempotente y si no encuentra bloque
+no toca nada.
+
+### La geometría de A-11 se midió, no se estimó
+
+Todos los valores de Y de `INTRO_SCENE.BOAT` salen de recorrer el PNG buscando la madera del muelle y el
+primer píxel de agua por columna:
+
+| Qué | Valor | Cómo se midió |
+|---|---|---|
+| Cubierta del muelle | `y=252` | densidad de píxeles de madera máxima entre `y=246` y `y=262` |
+| Extensión del muelle | `x=170..336` | misma pasada |
+| Línea de agua del bote | `y=318` | agua de primer plano, debajo del muelle |
+
+Lo mismo con A-12: `BEAM_FROM` y `ORB_FROM` en `src/constants/FINISHER.js` salen del **centroide de los
+píxeles de piel** en `hero_fire_1.png` y `hero_charge_1.png`, convertido a canvas con la escala real de
+dibujado (sprite de 128 pintado a 96 → factor 0.75). Estimados a ojo, el rayo salía **16 px por encima
+de las manos** y el orbe 20 px afuera.
+
+> 🔴 **Si regenerás A-12, hay que volver a medir.** `gen_hero_combat.sh` lo avisa al terminar.
+
+### Verificación de A-13 — el anclado
+
+Las tres poses nuevas tienen que apoyar en la misma línea de piso que las de pie, o el héroe flota o se
+hunde al cambiar de pantalla:
+
+```bash
+python -c "
+from PIL import Image
+for n in ('hero_stance_1','hero_down_1','hero_win_1'):
+    b = Image.open(f'public/assets/art/_gameready/{n}.png').convert('RGBA').getbbox()
+    print(f'{n:<14} apoya en canvas y={244 + b[3]*96/128:.0f}')
+"
+```
+
+- [x] Las tres dan `y=336`.
+- [ ] ⚠️ **Sin verificar en pantalla.** La herramienta de browser se cayó antes de poder mirar el
+      resultado corriendo. Se verificó la geometría medida sobre los PNG, no el render.
 
 ---
 
