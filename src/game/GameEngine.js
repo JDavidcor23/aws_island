@@ -10,6 +10,7 @@ import { advance, closeCardInfo, confirmCardInfo, endRound, isCardPlayable, need
 import { updateAttack } from './battle/attack'
 import { finisherDone, updateFinisher } from './battle/finisher'
 import { updateIntroScene, skipIntroScene } from './scenes/introScene'
+import { updateBriefing } from './scenes/briefingScene'
 import { createEffects } from './fx/effects'
 import { drawBackground, drawBoss, drawHero, drawParticles } from './render/drawScene'
 import { drawHUD } from './render/drawHUD'
@@ -27,6 +28,10 @@ const MAX_DT = 0.05
 const NO_HUD_STATES = [
   GAME_STATES.TITLE,
   GAME_STATES.INTRO,
+  // El briefing es una foto quieta: nadie atacó todavía, así que corazones y barra especial
+  // no informan nada y sólo compiten con la flecha que señala al jefe. La vida entra en
+  // cuadro junto con el primer problema, que es cuando empieza a estar en juego.
+  GAME_STATES.BRIEFING,
   GAME_STATES.TUTORIAL_CLEAR,
   GAME_STATES.REMATCH_INTRO,
   // El remate es una cinemática y va sin UI. No es sólo estética: el cartel del remate
@@ -82,6 +87,7 @@ const createInitialState = () => ({
   // Sub-máquinas de escena. Nacen en null y las inicializa su propio módulo: así reset()
   // las borra sin que este archivo tenga que saber qué campos tienen adentro.
   intro: null,
+  briefing: null,
   finisher: null,
 })
 
@@ -335,6 +341,10 @@ export class GameEngine {
     updateAttack(this, dt)
 
     if (G.state === GAME_STATES.INTRO) updateIntroScene(this, dt)
+
+    // El briefing sólo hace correr su typewriter. No tiene auto-avance a propósito: el
+    // jugador acaba de ver al jefe por primera vez y la pantalla tiene que esperarlo.
+    if (G.state === GAME_STATES.BRIEFING) updateBriefing(this, dt)
 
     if (G.state === GAME_STATES.CHOOSE) updateChooseTimer(this)
 

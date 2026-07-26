@@ -31,6 +31,14 @@ export const MUSIC_BY_STATE = {
   [GAME_STATES.LOAD]: MUSIC_TRACKS.MENU,
   [GAME_STATES.TITLE]: MUSIC_TRACKS.MENU,
   [GAME_STATES.INTRO]: MUSIC_TRACKS.MENU,
+  // El briefing se queda en la pista de la intro y NO pasa a MENTOR ni a BATTLE.
+  // Declarado explícito aunque el efecto sea el mismo que omitirlo (play(undefined) sale
+  // temprano y no cruza nada): dejarlo sin entrada parece un olvido, y el que agregue la
+  // próxima pantalla no tiene forma de saber si fue a propósito.
+  // El corte a BATTLE entra recién con el primer PROBLEM, o sea junto con el primer grito
+  // del jefe. Cruzar a MENTOR acá para volver a BATTLE dos líneas después deja el audio
+  // haciendo zigzag, que es lo mismo que ya se decidió para EXPLAIN.
+  [GAME_STATES.BRIEFING]: MUSIC_TRACKS.MENU,
 
   [GAME_STATES.PROBLEM]: MUSIC_TRACKS.BATTLE,
   [GAME_STATES.CHOOSE]: MUSIC_TRACKS.BATTLE,
@@ -47,11 +55,13 @@ export const MUSIC_BY_STATE = {
 }
 
 export const MUSIC = {
-  // ⚠️ SIN VERIFICAR DE OÍDO. Los efectos de sfx.service son WebAudio con ganancias de
-  // 0.03 a 0.12, que es muy bajo; un MP3 masterizado al 100% los taparía por completo.
-  // 0.3 es una estimación conservadora para que la música quede DEBAJO de los efectos.
-  // Si la mezcla suena mal, este es el único número que hay que tocar.
-  VOLUME: 0.3,
+  // ⚠️ EL VOLUMEN YA NO VIVE ACÁ. Se mudó a constants/AUDIO_SETTINGS.js (DEFAULT_MUSIC),
+  // porque dejó de ser una constante: ahora el jugador lo mueve con un slider y queda
+  // guardado en localStorage. El default bajó de 0.3 a 0.18 — el 0.3 estaba puesto sin
+  // haberlo escuchado (decía "SIN VERIFICAR DE OÍDO") y jugándolo tapa los efectos.
+  //
+  // No dejar un VOLUME acá es a propósito: un default duplicado en dos archivos es cómo
+  // terminan desincronizados.
   // Corte seco entre pistas suena a error. 700 ms alcanza para que no se note el empalme
   // sin que se escuchen las dos pistas peleando.
   CROSSFADE_MS: 700,

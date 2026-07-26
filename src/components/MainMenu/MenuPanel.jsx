@@ -1,3 +1,6 @@
+import { VolumeControls } from '../VolumeControls/VolumeControls'
+
+import { AUDIO_SETTINGS } from '../../constants/AUDIO_SETTINGS'
 import { CREDITS, HOW_TO_PLAY, MENU_OPTIONS, MENU_TEXTS } from '../../constants/MAIN_MENU'
 
 import './MenuPanel.css'
@@ -32,8 +35,13 @@ const CreditsBody = () => (
   </>
 )
 
+// El panel de audio no necesita onFocusChange: acá MenuList ya se monta con enabled={false}
+// porque hay un panel abierto, así que no hay nadie compitiendo por las flechas.
+const AudioBody = () => <VolumeControls />
+
 const PANELS = {
   [MENU_OPTIONS.HOW_TO_PLAY]: { title: HOW_TO_PLAY.TITLE, Body: HowToPlayBody },
+  [MENU_OPTIONS.AUDIO]: { title: AUDIO_SETTINGS.LABELS.TITLE, Body: AudioBody },
   [MENU_OPTIONS.CREDITS]: { title: CREDITS.TITLE, Body: CreditsBody },
 }
 

@@ -7,6 +7,7 @@ import { TIMING } from '../../constants/TIMING'
 import { UI_TEXTS } from '../../constants/UI_TEXTS'
 import { sfxService } from '../../services/sfx.service'
 import { advanceIntroScene } from '../scenes/introScene'
+import { advanceBriefing } from '../scenes/briefingScene'
 import { startFinisher } from './finisher'
 
 // Reglas del combate: rondas, elección de carta, bloqueo con timing y vida.
@@ -358,6 +359,13 @@ export const advance = (engine) => {
       break
     case GAME_STATES.INTRO:
       advanceIntroScene(engine)
+      break
+    case GAME_STATES.BRIEFING:
+      // La sub-máquina decide: completar la línea que se tipea, pasar a la siguiente, o
+      // arrancar la primera ronda. Acá no hay guard de G.t porque el briefing ya tiene su
+      // propio freno: hasta que la línea no terminó de revelarse, ESPACIO la completa en
+      // vez de avanzar, así que no se puede pasar de largo sin haber visto el texto.
+      advanceBriefing(engine)
       break
     case GAME_STATES.PROBLEM:
       if (G.t > TIMING.PROBLEM_MIN_WAIT) {

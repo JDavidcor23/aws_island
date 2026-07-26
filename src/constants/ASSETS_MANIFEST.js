@@ -31,6 +31,14 @@ export const ASSETS_MANIFEST = {
   penguin: 'penguin_64.png',
   penguinTalk1: 'penguin_talk_1.png',
   penguinTalk2: 'penguin_talk_2.png',
+  // Caminata del mentor. Ver scripts/gen_penguin_walk.sh.
+  // Existen porque el pingüino decía "vení conmigo" y se quedaba clavado mientras el héroe
+  // se iba solo. Si estos cuatro no cargan, drawIntroScene cae al waddle con los frames de
+  // habla: el pingüino igual CAMINA, sólo que con menos gracia. Nunca se queda quieto.
+  penguinWalk1: 'penguin_walk_1.png',
+  penguinWalk2: 'penguin_walk_2.png',
+  penguinWalk3: 'penguin_walk_3.png',
+  penguinWalk4: 'penguin_walk_4.png',
   heartF: 'heart_full.png',
   heartE: 'heart_empty.png',
   bar: 'special_bar.png',

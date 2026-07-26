@@ -3,12 +3,17 @@
 export const MENU_OPTIONS = {
   PLAY: 'PLAY',
   HOW_TO_PLAY: 'HOW_TO_PLAY',
+  AUDIO: 'AUDIO',
   CREDITS: 'CREDITS',
 }
 
+// AUDIO va antes de CRÉDITOS: es un ajuste que el jugador puede querer TOCAR antes de
+// empezar, y los créditos son lo último que se mira. Los textos de sus controles viven en
+// constants/AUDIO_SETTINGS.js, no acá.
 export const MENU_ITEMS = [
   { id: MENU_OPTIONS.PLAY, label: 'JUGAR' },
   { id: MENU_OPTIONS.HOW_TO_PLAY, label: 'CÓMO SE JUEGA' },
+  { id: MENU_OPTIONS.AUDIO, label: 'AUDIO' },
   { id: MENU_OPTIONS.CREDITS, label: 'CRÉDITOS' },
 ]
 

@@ -1,7 +1,18 @@
+import { AUDIO_SETTINGS } from '../constants/AUDIO_SETTINGS'
+
 // Efectos de sonido retro generados con WebAudio: cero archivos de audio.
 let audioContext = null
 
+// Multiplicador maestro de los efectos, 0..1. Lo mueve el jugador desde el control de audio.
+// Se aplica como FACTOR sobre el `vol` de cada beep y no lo reemplaza: las ganancias de acá
+// abajo están balanceadas entre sí (el tecleo a 0.022 contra el boom a 0.12) y pisarlas con
+// un valor único desarmaría esa mezcla.
+let masterVolume = AUDIO_SETTINGS.DEFAULT_SFX
+
 const beep = (freq, dur = 0.08, type = 'square', vol = 0.06, slide = 0) => {
+  // En 0 no se crea ni el oscilador: sin esto, silencio significaría igual un nodo por
+  // efecto, y el tecleo del typewriter dispara varios por segundo.
+  if (masterVolume <= 0) return
   try {
     if (!audioContext) {
       audioContext = new (window.AudioContext || window.webkitAudioContext)()
@@ -13,7 +24,7 @@ const beep = (freq, dur = 0.08, type = 'square', vol = 0.06, slide = 0) => {
     if (slide) {
       osc.frequency.linearRampToValueAtTime(freq + slide, audioContext.currentTime + dur)
     }
-    gain.gain.value = vol
+    gain.gain.value = vol * masterVolume
     gain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + dur)
     osc.connect(gain).connect(audioContext.destination)
     osc.start()
@@ -24,6 +35,15 @@ const beep = (freq, dur = 0.08, type = 'square', vol = 0.06, slide = 0) => {
 }
 
 export const sfxService = {
+  // Volumen maestro de los efectos. Se acota acá y no en el llamador para que nadie pueda
+  // dejar la ganancia arriba de 1 y saturar el oscilador.
+  setVolume: (value) => {
+    const { MIN, MAX } = AUDIO_SETTINGS
+    masterVolume = Math.min(MAX, Math.max(MIN, Number(value) || 0))
+    return masterVolume
+  },
+  getVolume: () => masterVolume,
+
   select: () => beep(440, 0.05, 'square', 0.04),
   confirm: () => beep(660, 0.09, 'square', 0.05, 200),
   wrong: () => beep(160, 0.2, 'sawtooth', 0.07, -60),

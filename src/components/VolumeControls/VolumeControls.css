@@ -1,0 +1,82 @@
+/* Los dos sliders de volumen. Hereda la escala tipográfica del contenedor (el menú de pausa
+   la ata al ancho del canvas), así que todo va en em y no en px. */
+.volume-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35em;
+  /* pointer-events: auto explícito porque este componente vive DENTRO de overlays que se
+     apoyan sobre el canvas. Si algún día el overlay que lo contiene pasa a
+     pointer-events: none, los sliders tienen que seguir siendo arrastrables. */
+  pointer-events: auto;
+}
+
+.volume-controls__row {
+  display: grid;
+  /* Tres columnas fijas y no `auto`: con anchos automáticos, "MÚSICA" y "EFECTOS" miden
+     distinto y los dos sliders arrancan en una X diferente, que se lee como desalineado. */
+  grid-template-columns: 4.6em 8.5em 2.4em;
+  align-items: center;
+  gap: 0.5em;
+}
+
+.volume-controls__label {
+  font-size: 0.62em;
+  letter-spacing: 0.08em;
+  color: #9fb6d8;
+}
+
+.volume-controls__value {
+  font-size: 0.62em;
+  /* tabular-nums evita que la fila "salte" al pasar de 95% a 100%: con cifras de ancho
+     variable, agregar un dígito corre el texto. */
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: #ffffff;
+}
+
+/* --- el slider ---
+   appearance: none en los tres lados y el riel dibujado a mano: el range nativo se ve como
+   un control de sistema operativo y rompe el registro pixel art del resto del menú. */
+.volume-controls__slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 0.55em;
+  margin: 0;
+  background: #101528;
+  border: 0.11em solid #3d4763;
+  cursor: pointer;
+}
+
+.volume-controls__slider:focus-visible {
+  outline: 0.11em solid #ffd94a;
+  outline-offset: 0.15em;
+}
+
+/* El thumb necesita las dos reglas duplicadas porque WebKit y Firefox usan pseudoelementos
+   distintos y un selector inválido invalida TODA la regla: no se pueden combinar con coma. */
+.volume-controls__slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 0.7em;
+  height: 1.05em;
+  background: #7de0ff;
+  border: 0.11em solid #0b0b12;
+  cursor: pointer;
+}
+
+.volume-controls__slider::-moz-range-thumb {
+  width: 0.7em;
+  height: 1.05em;
+  background: #7de0ff;
+  border: 0.11em solid #0b0b12;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.volume-controls__hint {
+  margin: 0.15em 0 0;
+  font-size: 0.56em;
+  text-align: center;
+  color: #9fb6d8;
+}

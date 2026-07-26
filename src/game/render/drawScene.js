@@ -19,6 +19,11 @@ const CHARGE_FRAME_DURATION = 0.12
 // El resto (TITLE, VICTORY) usa el sprite de frente, y ahí sonreír está BIEN: en la
 // portada todavía no lo atacaron, y en la victoria ya ganó.
 const STANCE_STATES = [
+  // El briefing entra acá aunque todavía no haya empezado la pelea: el héroe está mirando al
+  // jefe mientras el mentor se lo señala. Sin esto cae al sprite de frente y queda sonriendo
+  // a cámara con el Legacy Server a tres metros, que es exactamente el problema que este
+  // selector vino a resolver.
+  GAME_STATES.BRIEFING,
   GAME_STATES.PROBLEM,
   GAME_STATES.CHOOSE,
   GAME_STATES.TIMING,

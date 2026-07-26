@@ -7,6 +7,7 @@ import { drawBoss, drawHero } from './drawScene'
 import { drawDialogue } from './drawDialogue'
 import { drawText, drawTextOutlined } from './textHelpers'
 import { drawIntroScene } from './drawIntroScene'
+import { drawBriefing } from './drawBriefing'
 import { drawFinisher } from './drawFinisher'
 import { drawRematchIntroScreen, drawTutorialClearScreen } from './drawPhaseScreens'
 
@@ -114,6 +115,7 @@ export const drawLoadScreen = (engine) => {
 export const SCREEN_DRAWERS = {
   [GAME_STATES.TITLE]: drawTitleScreen,
   [GAME_STATES.INTRO]: drawIntroScene,
+  [GAME_STATES.BRIEFING]: drawBriefing,
   [GAME_STATES.PROBLEM]: drawProblemScreen,
   [GAME_STATES.EXPLAIN]: drawExplainScreen,
   [GAME_STATES.TUTORIAL_CLEAR]: drawTutorialClearScreen,
