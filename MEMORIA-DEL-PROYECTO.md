@@ -12,7 +12,8 @@
 >
 > Contiene solo observaciones de este proyecto y de scope `project`. Nada personal, nada de
 > otros repos, y ningún prompt.
-
+>
+> Se regenera con `python scripts/export_engram.py`. **No lo edites a mano.**
 
 ## Arquitectura (5)
 
@@ -37,7 +38,7 @@
 
 ### Migrado Cloud Quest a React+Vite con motor JS puro y fixes de rendimiento
 
-*2026-07-24 · `architecture/react-migration`*
+*2026-07-24*
 
 **What**: Migración completa del prototipo canvas a Vite + React 19 + JavaScript + Zustand, siguiendo las convenciones del usuario (carpeta agents/): componente = solo JSX, lógica en use*.hook.js, CSS por componente, constantes UPPER_SNAKE en src/constants/, Zustand granular solo desde hooks.
 
@@ -55,7 +56,7 @@
 
 ### Construido mapamundi caminable con Isla 0 en dos estados
 
-*2026-07-25 · `architecture/overworld-map`*
+*2026-07-25*
 
 **What**: Overworld top-down caminable (grafo de 9 nodos) como pantalla propia, con la Isla 0 en dos estados de arte: oxidada antes de ganar, revivida despues. Flujo: titulo -> mapa -> combate -> victoria -> mapa revivido.
 
@@ -83,7 +84,7 @@
 
 ### Definido concepto visual de Isla 0 y corregido postprocess.py
 
-*2026-07-25 · `architecture/concepto-isla-0`*
+*2026-07-25*
 
 **What**: Se escribio .kiro/specs/CONCEPTO_ISLA_0.md (7 elementos fijos + paletas pareadas) y se regeneraron las 6 vistas de la Isla 0 desde ese concepto: scene_island_before/after, scene_battle_arena, scene_island_path, island0_before/after. Se corrigio scripts/postprocess.py con 3 bugs que degradaban todo el arte.
 
@@ -108,7 +109,7 @@
 
 ### Reestructuró Cloud Quest en dos fases: tutorial guiado + revancha
 
-*2026-07-26 · `architecture/tutorial-revancha`*
+*2026-07-26*
 
 **What**: Se partió el combate de Cloud Quest en dos peleas contra el mismo jefe usando un eje `G.phase` (TUTORIAL | REMATCH) ORTOGONAL a `G.state`. Todo lo que difiere entre fases se lee de una única tabla `PHASE_CONFIG` (7 claves) en `src/constants/PHASES.js`. Cero pantallas duplicadas.
 
@@ -134,7 +135,7 @@
 
 **Learned — el bug de severidad que medí mal**: el velo del panel (alpha 0.78) TAPA el temporizador. Con el timer de 5s que había en los problemas 2-4, leer la ficha costaba un corazón tres veces sobre cuatro. La "línea de corte" del plan de tareas quedaba en un estado que entregaba lo CONTRARIO a la premisa del feature (castigar al que lee), así que hubo que mover la tarea 10 antes del corte. `drawCardInfo` ahora redibuja los segundos por encima del velo.
 
-## Decisiones (3)
+## Decisiones (4)
 
 ### Constraint: Cloud Quest migra a React.js + JavaScript, sin Python
 
@@ -165,7 +166,7 @@
 
 ### El brillo de la carta correcta pasó a las 4 rondas del tutorial (revierte el spec)
 
-*2026-07-26 · `decision/tutorial-brillo-4-rondas`*
+*2026-07-26*
 
 **What**: `guidedFirstProblem` se renombró a `highlightAnswer` y perdió la condición `G.round === 0`: el brillo sobre la carta correcta ahora está en las cuatro rondas del tutorial y se apaga en REMATCH. Además `COMBAT_PACING.CHOOSE_TIME_LIMIT` pasó de 5 a 15 segundos (provisorio, a la baja).
 
@@ -176,6 +177,28 @@
 **Learned**: Esto REVIERTE una decisión deliberada del propio spec, que tenía una sección con ⚠️ diciendo "La tentación es señalar la carta correcta en los 4 problemas. No se hace, y es deliberado". Se le planteó al usuario y lo reafirmó. El argumento que lo hace defendible: cuando se escribió esa sección el brillo era la ÚNICA ayuda; ahora viaja junto a `openInfoOnPick`, que obliga a abrir la ficha de cualquier carta antes de jugarla en todas las rondas. El brillo dice CUÁL y la ficha dice POR QUÉ. Costo aceptado y anotado en el spec: el tutorial ya no tiene ningún momento en el que el jugador resuelva algo solo.
 
 ⚠️ Deuda de documentación: `.kiro/specs/tutorial-revancha/design.md` (líneas ~66, 75, 85, 181, 437) y `tasks.md` (~101) siguen citando `guidedFirstProblem` y el gate viejo. requirements.md —que es el contrato— sí quedó actualizado.
+
+### Dos decisiones del spec revertidas a pedido del jugador, las dos con flag de fase
+
+*2026-07-26*
+
+**What**: Se revirtieron dos decisiones documentadas del spec `tutorial-revancha`, las dos implementadas como flag en `PHASE_CONFIG` para que se deshagan con una palabra.
+
+1. `explainOnMistake: false` en REMATCH — revierte el requisito 5.7. El pingüino ya no frena la revancha cuando erras; la lección aparece como texto flotante (`mistakeHint` en `endRound`).
+2. `lockWrongCards: true` en TUTORIAL — las cartas que no son la respuesta se dibujan apagadas y no se pueden jugar.
+
+**Why**: El jugador las pidió al probar el juego. En el caso 1 tenía razón de sobra: un error ya costaba un corazón, y encima frenaba con una pantalla modal repitiendo el texto que ya leíste en el tutorial. Tres castigos por un error.
+
+**Where**: `src/constants/PHASES.js` (las dos notas largas están ahí), `src/game/battle/battleLogic.js`, `src/game/render/drawCards.js`, `src/game/GameEngine.js`
+
+**Learned**:
+- `lockWrongCards` CONTRADICE el modelo de enseñanza que documentan `startRound` y `pickCard`: ahí el punto era que el jugador pueda elegir una equivocada porque leerla es cómo descubre que no sirve, y descartar es la habilidad que después le pide la revancha. Con las cartas bloqueadas el tutorial se vuelve "apretá la que brilla". Quedó avisado en el comentario del flag.
+- Bloquear cartas sin arreglar la NAVEGACIÓN es el bug obvio: las flechas se paran encima de una carta apagada y el ESPACIO deja de responder — el jugador no ve un bloqueo, ve un juego colgado. Hay que tocar cuatro lugares con el MISMO predicado (`isCardPlayable`): el dibujo, el hit-test del mouse, las flechas (`nextPlayableIndex`) y `startRound` (que ponía `sel = 0`, que puede caer en una bloqueada).
+- `confirmCardInfo` sobre una carta bloqueada tenía que cerrar y no jugar: si no, `pickCard` la reabre en el mismo frame y el panel parpadea sin cerrarse nunca.
+- Con `lockWrongCards` prendido, `highlightAnswer` queda redundante: la única carta jugable ya es la única brillante, y encima está preseleccionada. Tres señales para una sola elección.
+- El subtítulo "Isla 0 — Fundamentos de la Nube" se mudó del menú principal a una placa de nivel (`components/LevelCard`) que aparece al apretar JUGAR. En la portada era metadata sobre un lugar al que el jugador no había entrado.
+- El botón de menú se extrajo a `components/MenuList/` porque el menú de pausa se había hecho con bordes CSS y sólo mouse: dos lenguajes visuales para el mismo control. `MenuList` trae el marco de `menu_button.png`, el caret y las flechas.
+- El contenido del menú principal NO se desmonta al abrir un panel (`visibility: hidden`): el foco vive dentro de `MenuList`, y desmontarlo lo perdía y devolvía el cursor a JUGAR.
 
 ## Bugs arreglados (2)
 
@@ -208,11 +231,11 @@
 4. **Trampa de verificación:** mi primer test asertaba "el hint no pisa la banda vertical de las cartas" y daba ❌ correctamente pero por un invariante equivocado. El panel se rellena con `COLORS.panel` opaco antes de escribir, así que cualquier cosa adentro tapa las cartas por definición. El invariante bueno es "el hint cae dentro del rect opaco". Preguntar por las cartas solo tenía sentido cuando el hint vivía afuera, sobre el velo semitransparente.
 5. Script de verificación: `verify-panel-layout.mjs` en el scratchpad, corre con `node --import ./register.mjs`.
 
-## Patrones y convenciones (1)
+## Patrones y convenciones (2)
 
 ### Implementada la historia de la Isla 0: 3 archivos, todo texto
 
-*2026-07-26 · `decision/historia-isla-0`*
+*2026-07-26*
 
 **What**: Spec de `historia-isla-0` implementado y verificado. Cambios: `INTRO_LINES` pasó de 2 a 6 líneas (on-premise + legacy + Amazon, sobre el pueblo enfermo que ya estaba dibujado); nuevo `UI_TEXTS.TUTORIAL_CLOUD_REVEAL` que se muestra solo en el EXPLAIN de la ronda 0 del tutorial; `VICTORY_PAYOFF` y `VICTORY_NEXT_ISLAND` reemplazan "Bienvenido al mundo Cloud." y el pie de Isla 1; `DEFEAT_TITLE`/`DEFEAT_STAKE` cambian la derrota para que duela por el pueblo y no por el servidor. Borrado `UI_TEXTS.INTRO_MENTOR` (estaba muerto).
 
@@ -226,11 +249,31 @@
 3. El script de verificación vive en el scratchpad (`verify-historia.mjs`) y necesita un resolver de extensiones: el proyecto importa sin `.js` (lo resuelve Vite, Node no). El hook está en `ext-loader.mjs` + `register.mjs`, se corre con `node --import ./register.mjs`. Sirve para medir cualquier texto del juego sin buildear.
 4. `G.round === 0` es válido durante el EXPLAIN del primer problema porque `endRound` incrementa después. Y los dos prefijos existentes alcanzan porque al EXPLAIN del tutorial solo se llega con la carta correcta (`pickCard` solo pasa a TIMING si acertás, y el tutorial no tiene timeout).
 
-## Descubrimientos y trampas (6)
+### Pipeline de arte: dos herramientas solapadas, el anclado al piso, y dónde vive la doc
+
+*2026-07-26*
+
+**What**: Documentado el pipeline de generación de arte en dos niveles, y quedó registrada una duplicación de herramientas que se creó por pedir mal el arte.
+
+**Where**:
+- `.kiro/steering/arte.md` — NUEVO. Kiro carga `steering/` solo y siempre, así que este es el archivo que hace que Kiro sepa generar arte sin que se le explique. Flujo de 3 pasos, comando de `codex exec -i`, 6 reglas duras, tabla de decisión de scripts.
+- `.kiro/specs/ASSETS.md` — extendido con A-11 (costa + bote), A-12 (5 poses de combate) y A-13 (derrota + victoria).
+
+**Why**: El usuario necesita trabajar en Kiro, pero las imágenes las genera el CLI de codex, no Kiro. Sin doc en `steering/` eso se perdía al cambiar de herramienta.
+
+**Learned**:
+- 🔴 **`pack_sprite_set.py` DUPLICA a `split_sheet.py`.** `split_sheet.py` ya calculaba el bbox unión y anclaba por abajo (línea 66: `canvas.paste(scaled, ((target_w - new_w) // 2, target_h - new_h))`). La diferencia real es la ENTRADA: `split_sheet` parte una hoja horizontal, `pack_sprite_set` toma N archivos sueltos. Se creó la segunda herramienta porque se le pidió a codex 5 archivos separados sin mirar que la primera ya existía. **Para el próximo set de frames: pedir una HOJA horizontal y usar `split_sheet.py`.** No agrandar la duplicación.
+- `postprocess.py --pad-bottom N` es nuevo y hace falta para cualquier sprite que NO sea una figura de pie. El motor dibuja todos los sprites del héroe en la misma caja de 96 px anclada en `LAYOUT.HERO`, o sea que la línea de piso es el borde INFERIOR del lienzo. Centrado, `hero_down` flotaba 25 px.
+- Verificación del anclado, un comando: leer el `getbbox()` de cada sprite y calcular `244 + bbox[3]*96/128`. Guardia, derrota y victoria tienen que dar los tres **y=336**. Si uno difiere, flota o se hunde.
+- `patch_solid_block.py` es nuevo: tapa el rectángulo de color liso que el generador devuelve cuando se le pide una zona "oscura y vacía" por coordenadas. Clona el bloque vecino espejado en X — pegarlo tal cual repite las mismas nubes a distancia fija.
+- La textura chunky del pixel art del proyecto sale del DOWNSCALE duro, no del tamaño de generación. El original se generó a 1254 px y las hojas a 724 px por frame.
+- Si se corre un script de generación desde un agente, usar RUTA ABSOLUTA. Un `cd` previo que quedó en otra carpeta hace fallar el job sin decir por qué (pasó: el job de `gen_hero_down.sh` falló porque el cwd había quedado en `assets/audio`).
+
+## Descubrimientos y trampas (7)
 
 ### Generación de sprites en hackaton_aws vía Codex CLI (motor de PixelForge)
 
-*2026-07-24 · `hackaton_aws/art-generation-pipeline`*
+*2026-07-24*
 
 What: Genero los sprites del juego (Cloud Quest, hackatón AWS) llamando el CLI de Codex directo — el mismo motor que usa PixelForge (ya NO usa PixelLab pese a que el código conserva esos nombres).
 
@@ -239,7 +282,7 @@ GOTCHA CRÍTICO: hay que redirigir `< /dev/null` o codex se cuelga en "Reading a
 
 Prompt base de personajes (CODEX_BASE_PROMPT, se antepone): "Generate a 64x64 pixel art sprite, limited palette of max 16 colors, no anti-aliasing, transparent background, full body centered, retro 16-bit style. Subject: " + descripción corta del sujeto.
 
-Salida: PNGs en $AI_OUTPUT_DIR = C:\Users\<usuario>\.codex\generated_images\<sesión>\call_*.png, ~1254x1254 RGB. Codex emite DOS por generación: una transparente (call_*-transparent.png) y una con fondo verde/sólido (cruda, para chroma key). Auth por ChatGPT.
+Salida: PNGs en $AI_OUTPUT_DIR = C:\Users\jdiaz483\.codex\generated_images\<sesión>\call_*.png, ~1254x1254 RGB. Codex emite DOS por generación: una transparente (call_*-transparent.png) y una con fondo verde/sólido (cruda, para chroma key). Auth por ChatGPT.
 
 Restricciones del pipeline: el prompt base es SOLO para personajes (full body centered). Fondos/escenarios y UI compleja necesitan prompt propio SIN la base. PixelForge solo downscalea a 64 o 128 (el jefe grande topa en 128).
 
@@ -258,7 +301,7 @@ Learned: héroe salió excelente al primer intento (niño pelo negro semi-anime,
 
 ### Playwright entrega 1 fps de requestAnimationFrame
 
-*2026-07-25 · `testing/playwright-raf-throttling`*
+*2026-07-25*
 
 **What**: El navegador de Playwright entrega ~1 callback de requestAnimationFrame por segundo, aun cuando document.visibilityState es "visible" y document.hasFocus() es true. Medido: 1 frame en 1000ms.
 
@@ -277,7 +320,7 @@ Learned: héroe salió excelente al primer intento (niño pelo negro semi-anime,
 
 ### Merge de feature/Jennifer (barra de vida del boss) a main + trampa de case-collision en refs
 
-*2026-07-25 · `git/branches/jennifer-boss-health`*
+*2026-07-25*
 
 **What**: Mergeado `origin/feature/Jennifer` (commit ebe4db8, "feat: add boss health bar UI") a `main` con `--no-ff` → merge commit caa8bf2. Sin conflictos. NO pusheado todavía.
 
@@ -304,7 +347,7 @@ Learned: héroe salió excelente al primer intento (niño pelo negro semi-anime,
 
 ### Merge de feature/osvaldo (tutorial + ritmo CHOOSE) y colision de texto con la barra del boss de Jennifer
 
-*2026-07-26 · `git/branches/osvaldo-intro-pacing`*
+*2026-07-26*
 
 **What**: Mergeado `origin/feature/osvaldo` a `main` con `--no-ff` → merge commit 653584c. Sin conflictos textuales. `main` quedó 6 commits adelante de `origin/main`, NO pusheado.
 
@@ -336,7 +379,7 @@ Learned: héroe salió excelente al primer intento (niño pelo negro semi-anime,
 
 ### agy Claude Opus 4.6 alucina archivos delegando a subagentes internos
 
-*2026-07-26 · `tooling/agy-opus-46-hallucination`*
+*2026-07-26*
 
 **What**: Despachando la tarea más riesgosa de un feature a `agy --model "Claude Opus 4.6 (Thinking)"`, el ejecutor lanzó subagentes internos "en paralelo" para leer los archivos de contexto, y esos subagentes DEVOLVIERON CONTENIDO INVENTADO. Le reportaron un `ROUNDS.js` con cartas de AWS Lambda/EC2/S3, un `GAME_STATES.RULES` inexistente, `MAX_HEARTS: 3` en vez de 4, y un `PHASE_CONFIG` con claves que no existen. Describieron un juego distinto al del repo. Después salió con exit code 1, abortando a mitad del trabajo.
 
@@ -350,7 +393,29 @@ Learned: héroe salió excelente al primer intento (niño pelo negro semi-anime,
 - Ante alucinación en el nervio de un sistema, NO gastar los 2 reintentos: escalar directo a Claude nativo. Opus 4.8 nativo completó la mitad restante y además encontró 4 defectos reales que no le habían pedido, incluido uno de diseño (`updateChooseTimer` no seteaba `lastResult = 'miss'` en el timeout, así que un timeout cobraba un corazón y encadenaba sin explicar nada).
 - `agy --print` con prompts muy largos rompe el quoting de bash. Solución: escribir el prompt a un archivo y pasarlo como `--print "$(cat archivo)"`.
 
-## Resúmenes de sesión (6)
+### Generar sprites en modelo: la referencia manda, los adjetivos de estilo la rompen
+
+*2026-07-26*
+
+**What**: Para generar sprites nuevos de un personaje que YA existe, el prompt tiene que adjuntar la imagen de referencia (`codex exec -i archivo.png`) y hablar SOLO de la pose. Cero adjetivos de estilo.
+
+**Why**: Costó tres intentos en hackaton_aws (sprites de combate del héroe):
+1. Descripción de texto sin referencia → salió otro chico: proporción adolescente en vez de chibi, sombreado con pliegues, sin el cuadradito naranja del pecho.
+2. Referencia adjunta + lista larga de reglas de estilo ("colores planos", "dos tonos por material", "proporción chibi", "sin pliegues") → sobrecorrigió a un muñeco de tubos con contorno grueso, y encima interpretó "cuadradito naranja del pecho" como cuadrados naranjas en los PUÑOS.
+3. Referencia adjunta + prompt corto que sólo describe la pose → en modelo.
+
+Los adjetivos de estilo PELEAN contra la imagen. El estilo lo define el PNG.
+
+**Where**: `scripts/gen_hero_combat.sh`, `scripts/gen_hero_down.sh` (los dos con el historial escrito en el encabezado), `.kiro/specs/hero-combat-anim/design.md`
+
+**Learned**:
+- La textura chunky del pixel art del proyecto sale del DOWNSCALE duro (generar a ~768-1254 px y bajar a 128), no del tamaño de generación. Generar a 256 da demasiado detalle fino y se lee como otro personaje.
+- `postprocess.py --trim` recorta CADA imagen por su propio contenido. Para frames de una misma animación eso arruina todo: la pose de disparo mide 501 px de ancho y la de guardia 385, así que quedan con escalas distintas y el personaje salta entre frames. Para eso está `scripts/pack_sprite_set.py`, que calcula el bbox UNIÓN del set.
+- Un sprite que NO es una figura de pie (un cuerpo tirado) necesita `--pad-bottom`: centrado en el lienzo queda flotando en el aire, porque el motor ancla todos los sprites del héroe en la misma caja y la línea de piso es el borde inferior del lienzo. Medido: flotaba 25 px.
+- Pedirle al generador que una zona quede "oscura y vacía" por coordenadas te puede devolver un RECTÁNGULO de color liso con bordes rectos. Pasó en `c4_island_shore.png` (bloque de 120x40 en la esquina). De ahí `scripts/patch_solid_block.py`.
+- Las posiciones de efectos que salen de un sprite (origen de un rayo, un orbe entre las manos) hay que MEDIRLAS sobre el PNG final, no estimarlas: a ojo el rayo salía 16 px por encima de las manos.
+
+## Resúmenes de sesión (14)
 
 ### Session summary: hackaton_aws
 
@@ -431,7 +496,7 @@ Generate and save a pixel-art 2D adventure overworld map asset for the current p
 The requested asset needed to be exactly 640x360 pixels and saved at `assets/art/generated/a6_overworld_map.png`.
 
 #### Discoveries
-- Built-in imagegen saved the generated source under `C:/Users/<usuario>/.codex/generated_images/...`; project-bound assets need to be copied into the workspace.
+- Built-in imagegen saved the generated source under `C:/Users/jdiaz483/.codex/generated_images/...`; project-bound assets need to be copied into the workspace.
 - Final exact dimensions were enforced with nearest-neighbor resizing to preserve crisp pixel-art edges.
 
 #### Accomplished
@@ -506,7 +571,7 @@ Generate two SICK-state pixel art background images for Isla 0 Server Town and s
 User required no text/UI/characters/people; fixed landmark relative positions across views; battle arena needed HUD, boss-silhouette, floor, and dialogue-box clearance constraints.
 
 #### Discoveries
-- Built-in image generation saved source files under C:/Users/<usuario>/.codex/generated_images/... at 1672x941.
+- Built-in image generation saved source files under C:/Users/jdiaz483/.codex/generated_images/... at 1672x941.
 - Final project assets were resized to exact 640x360 using nearest-neighbor resampling to preserve hard pixel-art edges.
 
 #### Accomplished
@@ -521,6 +586,275 @@ User required no text/UI/characters/people; fixed landmark relative positions ac
 - assets/art/generated/a10_battle_arena.png — final generated boss battle background.
 - assets/art/generated/a10_island_path.png — final generated side-scrolling island path background.
 
----
+### Session summary: aws_island
 
-_Se omitieron 6 entradas de telemetría (project, passive, file_change). Están en el JSON._
+*2026-07-26*
+
+#### Goal
+Generate five 256x256 pixel art hero character sprite PNGs for the game project.
+
+#### Instructions
+User required exact filenames under assets/art/generated, same young boy character across all frames, pure #00b140 green background, no shadows/floor/props, and no energy/glow/beam/aura/projectile/magic because VFX are added by the game engine.
+
+#### Discoveries
+- Built-in image generation produced green backgrounds with slight variation, so generated sprites were post-processed to force exact RGB #00b140 outside the character.
+- A generated charge-hard frame included stray white motion lines; post-processing kept only the largest non-green connected component to remove non-character artifacts.
+
+#### Accomplished
+- ✅ Created assets/art/generated/c1_hero_stance_1.png as a battle stance frame.
+- ✅ Created assets/art/generated/c1_hero_stance_2.png as a breathing variant derived from stance_1 for consistency.
+- ✅ Created assets/art/generated/c2_hero_charge_1.png as a charging pose.
+- ✅ Created assets/art/generated/c2_hero_charge_2.png as a harder charging pose with stray non-character artifacts removed.
+- ✅ Created assets/art/generated/c3_hero_fire_1.png as a firing pose.
+- ✅ Validated all five PNGs are 256x256 and use exact #00b140 for the background pixels.
+
+#### Next Steps
+- If animation fidelity needs tightening, compare frames in-engine and adjust stance_2/charge_2 deltas by hand.
+
+#### Relevant Files
+- assets/art/generated/c1_hero_stance_1.png — generated battle stance sprite.
+- assets/art/generated/c1_hero_stance_2.png — generated idle breathing sprite.
+- assets/art/generated/c2_hero_charge_1.png — generated charge sprite.
+- assets/art/generated/c2_hero_charge_2.png — generated harder charge sprite.
+- assets/art/generated/c3_hero_fire_1.png — generated firing sprite.
+
+### Session summary: aws_island
+
+*2026-07-26*
+
+#### Goal
+Generate two project-local pixel-art game assets for Cloud Quest / Isla 0 Server Town.
+
+#### Instructions
+- User requested exact output paths and dimensions: `assets/art/generated/c4_island_shore.png` at 640x360 opaque, and `assets/art/generated/c5_boat.png` at 256x160 with flat pure green `#00b140` chroma-key background.
+- Style constraints: clean HD pixel art, western semi-anime, crisp hard pixel edges, limited palette, no text/UI/characters in the shore background, and no passenger/cargo/water/shadow in the boat sprite.
+
+#### Discoveries
+- Built-in image generation produced larger 16:9-ish PNGs, so final game-ready assets required local Pillow post-processing with nearest-neighbor resize/crop.
+- The boat generation background was green but not perfectly uniform; flood-fill from borders was needed to normalize the connected background to exact `#00b140` without destroying the turquoise weathered hull strip.
+- The shore background needed post-processing to enforce the gameplay-safe top-right skip-hint zone and the empty lower-left boat-entry water lane.
+
+#### Accomplished
+- ✅ Generated and saved `assets/art/generated/c4_island_shore.png` as an RGB 640x360 opaque PNG.
+- ✅ Generated and saved `assets/art/generated/c5_boat.png` as an RGB 256x160 PNG with pure `#00b140` chroma-key corners/background.
+- ✅ Visually inspected both final files and validated dimensions/mode via Pillow.
+
+#### Next Steps
+- If the gameplay composition needs stricter collision/landing alignment, review the jetty and left-water lane in-engine and regenerate or paint-adjust only those zones.
+
+#### Relevant Files
+- assets/art/generated/c4_island_shore.png — generated Isla 0 sick-state shore establishing background, post-processed to exact 640x360.
+- assets/art/generated/c5_boat.png — generated side-profile rowboat sprite, post-processed to exact 256x160 with `#00b140` background.
+
+### Session summary: aws_island
+
+*2026-07-26*
+
+#### Goal
+Generate five 768x768 pixel art hero battle sprites for the current game project.
+
+#### Instructions
+User requires the exact existing hero identity/style: chibi boy, cream shirt with orange chest square, blue trousers, brown boots, brown backpack, black spiky hair, pure #00b140 chroma-key background, no effects/energy/beam/aura/projectile, same camera/floor/top margin across frames.
+
+#### Discoveries
+- A previous set of generated hero sprites existed at 256x256, but the current request required at least 768x768.
+- Built-in image generation produced green backgrounds with gradients, so final sprites were post-processed to exact #00b140 and flattened to a limited palette.
+- Final validation confirmed all five outputs are 768x768, use 15 colors, have #00b140 at background corners, and share the same non-green top/bottom bbox y positions.
+
+#### Accomplished
+- ✅ Generated and saved c1_hero_stance_1.png as battle stance.
+- ✅ Generated and saved c1_hero_stance_2.png as breathing battle stance.
+- ✅ Generated and saved c2_hero_charge_1.png as charging pose.
+- ✅ Generated and saved c2_hero_charge_2.png as harder charging pose.
+- ✅ Generated and saved c3_hero_fire_1.png as firing pose.
+- ✅ Normalized all five to 768x768 with exact chroma-key background and shared ground/top framing.
+
+#### Next Steps
+- If the animation needs tighter frame-to-frame consistency, compare in-engine and hand-adjust stance_2/charge_2 deltas.
+
+#### Relevant Files
+- assets/art/generated/c1_hero_stance_1.png — generated battle stance sprite.
+- assets/art/generated/c1_hero_stance_2.png — generated breathing battle stance sprite.
+- assets/art/generated/c2_hero_charge_1.png — generated charge sprite.
+- assets/art/generated/c2_hero_charge_2.png — generated harder charge sprite.
+- assets/art/generated/c3_hero_fire_1.png — generated firing sprite.
+
+### Session summary: aws_island
+
+*2026-07-26*
+
+#### Goal
+Generate five new right-facing hero sprite pose PNGs from the provided hero idle sprite and walk-cycle references.
+
+#### Instructions
+- Keep the hero character identity/style as close as possible to the references: same palette, outline, proportions, shirt orange square, backpack, trousers, boots, and pixel-art detail level.
+- Save project-bound generated assets under assets/art/generated.
+- Use a flat pure green #00b140 background, not transparency or checkerboard.
+- Do not include energy/glow/beams/auras; hands remain empty.
+
+#### Discoveries
+- Built-in image generation saved intermediate files under C:/Users/jdiaz483/.codex/generated_images/019f9f0d-600b-7240-b9fe-4844022d9f99.
+- The generated green backgrounds included slight gradients, so the final project PNGs were post-processed with Pillow to replace greenish background pixels with exact #00b140.
+- Source idle file assets/art/characters/06_hero_side_idle_1.png is RGB 1254x1254 with checkerboard-style background; walk sheet is RGBA 4344x724 with transparent areas.
+
+#### Accomplished
+- ✅ Generated and saved five 1254x1254 RGB PNGs with exact #00b140 corner/background keying.
+- ✅ Wrote outputs to the requested paths in assets/art/generated.
+- ✅ Verified all five requested files exist and are at least 768x768.
+
+#### Next Steps
+- If stricter animation consistency is required, manually pixel-edit frames, especially c1 breathing frame and charge/fire hand alignment, because generative editing may slightly drift details.
+
+#### Relevant Files
+- assets/art/generated/c1_hero_stance_1.png — fighting stance frame with both fists raised.
+- assets/art/generated/c1_hero_stance_2.png — breathing follow-up stance frame.
+- assets/art/generated/c2_hero_charge_1.png — charge pose leaning back with hands near rear hip.
+- assets/art/generated/c2_hero_charge_2.png — stronger lean-back charge pose with lifted hair.
+- assets/art/generated/c3_hero_fire_1.png — forward thrust/fire pose with empty hands.
+
+### Session summary: aws_island
+
+*2026-07-26*
+
+#### Goal
+Generate and save a new knocked-out/down hero pixel-art sprite from the existing hero references.
+
+#### Instructions
+User required this as an edit of the attached hero, not a new character: same palette, outline, proportions, black spiky hair, cream shirt with orange chest square, brown backpack, blue trousers, brown boots; kids' game tone with no blood/wounds/bruises/torn clothes/cross-eyes; flat pure #00b140 background; final PNG at least 768x768 saved to `assets/art/generated/c6_hero_down_1.png`.
+
+#### Discoveries
+- Built-in image generation saved the first output under `C:\Users\jdiaz483\.codex\generated_images\019f9f24-3aa1-73b2-83fc-a9ea3adbe93b\call_dFPrHkzeKTc6pzJL3uDxqVn4.png`.
+- The generated image had green lighting/shadow variation, so the project-bound copy was post-processed with PIL by replacing connected green-dominant background pixels with exact `#00b140`.
+
+#### Accomplished
+- ✅ Generated a horizontal knocked-out hero sprite: head left, boots right, lying limp on side, eyes closed, mouth slightly open, backpack against his back.
+- ✅ Saved final PNG to `assets/art/generated/c6_hero_down_1.png`.
+- ✅ Validated final size is `1254x1254` and green background pixels/corners are exact `#00b140`.
+
+#### Next Steps
+- If desired, review in-game scale/alignment against the existing battle sprites and adjust placement/crop only if needed.
+
+#### Relevant Files
+- assets/art/generated/c6_hero_down_1.png — final knocked-out hero sprite on exact #00b140 background.
+
+### Session summary: aws_island
+
+*2026-07-26*
+
+#### Goal
+Cerrar Cloud Quest (hackaton_aws): pose de pelea, ataque supremo, menú de inicio, llegada en barco. Sobre la marcha se sumaron: rediseño de tarjetas, música, frame de derrota, menú de pausa con ESC, y sacar la interrupción del pingüino en la revancha.
+
+#### Instructions
+- El usuario frena y corrige cuando el arte no está en modelo. Verificar SIEMPRE el sprite generado contra el personaje existente antes de integrarlo.
+- Prefiere que se le diga cuando una decisión ya estaba tomada a propósito en su propio spec, antes de revertirla.
+
+#### Discoveries
+- `feature/nicolas` está en 0 commits sobre `main`: el menú nunca se implementó, pero el spec (requirements + design + tasks + reference.png) estaba escrito por Jorge mismo, con logo y botón ya en `_gameready`.
+- `reference.png` del spec del menú quedó DESACTUALIZADA: `scene_island_before.png` se regeneró en `153fa49`, posterior a la imagen.
+- La interrupción del pingüino en la revancha era el requisito 5.7 del spec `tutorial-revancha`, no un bug. `needsExplain` tenía dos términos que no miraban la fase.
+- ESC ya tenía dueño en el juego: cierra el panel de carta. La pausa se enganchó DESPUÉS de ese bloque para no robarle la tecla.
+- El menú y el canvas ahora comparten la misma fórmula de tamaño 16:9, así entrar a jugar no da salto de layout.
+- La nube del remate venía del código viejo con radio 85 y alpha 0.85: tres círculos blancos opacos tapando los corazones.
+
+#### Accomplished
+- **Menú**: spec implementado completo (5 archivos + App.jsx), más el elenco en la portada. Verificado con Playwright a 1280 y 768, incluido el bug de "flechas con panel abierto".
+- **Pose de pelea**: `heroSprite()` selecciona sprite por estado, con fallback a `heroSide` (nunca al de frente sonriendo). Más juice de 4 líneas: se planta en el windup, se tira adelante al reflejar.
+- **Ataque supremo**: sub-máquina `CHARGE -> FIRE` en `G.finisher`, rayo 100% procedural. Verificado: CHARGE 1.40s, total 3.12s, bossGone 1.000, 6 explosiones.
+- **Llegada en barco**: pasos `BOAT_IN -> DISEMBARK -> FADE` sobre `scene_island_shore.png` nuevo, con corte a negro. Timing en vivo medido y correcto.
+- **Tarjetas**: el número se mudó a la placa vacía del arte; gap 16→24 elimina el escalonado de etiquetas.
+- **Música**: `music.service.js` con crossfade, mapa estado→pista, mute en M, y manejo de la política de autoplay.
+- **Derrota**: `hero_down_1.png` en modelo, anclado con `--pad-bottom 5` a la misma línea de piso.
+- **Pausa**: overlay DOM con CONTINUAR / REINICIAR / VOLVER AL MENÚ.
+- **Revancha**: el pingüino ya no frena; la lección queda como texto flotante (`explainOnMistake: false`).
+
+#### Next Steps
+- **NADA está commiteado.** Todo en el working tree.
+- **Falta verificación visual** de: tarjetas con el número en la placa, el héroe caído en la escena de derrota, y el overlay de pausa. Playwright se desconectó a mitad de sesión.
+- **La mezcla de audio no se verificó de oído** (imposible para el agente). `MUSIC.VOLUME = 0.3` es una estimación; es el único número a tocar.
+- Decisión pendiente del usuario: la cinemática de apertura dura 4.8s antes de poder jugar (7.3s hasta el primer diálogo). Se acorta con `BOAT.DURATION` y `FADE_DURATION`.
+
+#### Relevant Files
+- `src/constants/FINISHER.js` — números del remate. BEAM_FROM y ORB_FROM están MEDIDOS sobre los sprites; si se regeneran, hay que volver a medir.
+- `src/constants/MUSIC.js` — mapa estado→pista y VOLUME sin verificar
+- `src/constants/PHASES.js` — `explainOnMistake` es el flag que revierte el req 5.7
+- `src/game/battle/finisher.js`, `src/game/render/drawFinisher.js` — remate
+- `src/game/scenes/introScene.js`, `src/game/render/drawIntroScene.js` — llegada en barco
+- `src/components/GameCanvas/PauseMenu.jsx` — pausa
+- `scripts/pack_sprite_set.py`, `scripts/patch_solid_block.py` — pipeline de arte nuevo
+- `.kiro/specs/hero-combat-anim/design.md`, `.kiro/specs/intro-boat-arrival/design.md`
+
+### Session summary: aws_island
+
+*2026-07-26*
+
+#### Goal
+Create a victory celebration sprite variant for the game hero using the provided idle and battle-stance references.
+
+#### Instructions
+User wanted the result treated as an edit of the attached sprite, not a new character, with strict preservation of palette/proportions/detail and a flat pure #00b140 background.
+
+#### Discoveries
+- Built-in image generation produced slight green background shading/vignette even when prompted for flat green, so deterministic post-processing was needed to force background pixels to exact #00b140.
+
+#### Accomplished
+- ✅ Generated a full-body victory pose: one fist raised, other arm relaxed, boots planted, wide smile, green background.
+- ✅ Saved the final PNG at 1254x1254 with opaque alpha and exact #00b140 corners/background.
+
+#### Next Steps
+- If the pose needs stricter side-view fidelity, generate a second targeted revision using the saved file and original references.
+
+#### Relevant Files
+- assets/art/generated/c7_hero_win_1.png — final generated victory hero sprite asset.
+- assets/art/characters/06_hero_side_idle_1.png — original idle reference.
+- assets/art/generated/c1_hero_stance_1.png — battle stance/reference background asset.
+
+### Session summary: aws_island
+
+*2026-07-26*
+
+#### Goal
+Cerrar Cloud Quest para la entrega del lunes 27. Arrancó con cuatro pedidos (pose de pelea, ataque supremo, menú de inicio, llegada en barco) y creció a diez sobre la marcha.
+
+#### Instructions
+- El usuario CORRIGE el arte cuando no está en modelo. Verificar siempre el sprite generado contra el personaje existente ANTES de integrarlo. Frenó dos veces.
+- Quiere que se le diga cuando una decisión ya estaba tomada a propósito en su propio spec, antes de revertirla. Las dos veces que se le mostró la cita, decidió revertir igual — pero quería saberlo.
+- Está contra reloj y dijo explícitamente que no está para buenas prácticas. No hacerle perder tiempo con ceremonia.
+- No commitear sin que lo pida.
+
+#### Discoveries
+- `feature/nicolas` estaba en 0 commits sobre `main`: el menú nunca se implementó, pero el spec completo (requirements + design + tasks + reference.png) lo había escrito Jorge mismo.
+- `reference.png` del spec del menú quedó vieja en el fondo: `scene_island_before.png` se regeneró en `153fa49`, posterior a la imagen.
+- ESC ya tenía dueño: cierra el panel de carta. La pausa se enganchó DESPUÉS de ese bloque.
+- `split_sheet.py` ya hacía el bbox unión y el anclado por abajo. `pack_sprite_set.py` lo duplica — ver la memoria `arte/pipeline-herramientas`.
+- Los tres MP3 tienen peso idéntico (744609 bytes) pero MD5 distintos: son tres pistas diferentes, no un duplicado.
+- El usuario creyó que el audio no se había publicado. Sí está: `public/assets/audio/` está commiteado y pusheado. Lo que se ignoró fue `assets/audio/`, la copia byte a byte con los nombres largos. Vite copia `public/` al build sin config extra.
+
+#### Accomplished
+Diez features, todas en la rama `feature/cierre-isla-0`, **pusheada** con 7 commits (73 archivos, +2646):
+1. Menú principal (spec implementado completo) + elenco en la portada
+2. Pose de pelea con selector por estado y fallback a `heroSide`
+3. Ataque supremo: sub-máquina CHARGE→FIRE, rayo 100% procedural
+4. Llegada en barco con corte a negro entre dos fondos
+5. Tarjetas: el número se mudó a la placa vacía del arte, gap 16→24 mata el escalonado
+6. Música: 3 pistas con crossfade, mute en M, manejo de autoplay
+7. Frame de derrota y frame de victoria
+8. Menú de pausa con ESC (continuar / reiniciar / volver al menú)
+9. Placa de nivel estilo Mario al entrar; el subtítulo salió del menú
+10. `MenuList` compartido: la pausa tenía botones CSS y solo mouse — dos lenguajes visuales para el mismo control
+
+Se sacó el salto del bote al muelle a pedido del usuario: quedó BOAT_IN + HOLD + FADE.
+
+#### Next Steps
+- **SIN COMMITEAR**: `BRIEF-VIDEO.md` (brief para el guionista del video), `.kiro/steering/arte.md` (nuevo), cambios en `.kiro/specs/ASSETS.md`. El usuario los pidió pero no pidió commitearlos.
+- 🔴 **NADA SE VERIFICÓ VISUALMENTE.** Playwright se desconectó a mitad de sesión. Se verificó: parseo con esbuild, resolución de módulos y assets por HTTP, y toda la geometría medida sobre los PNG. NO se vio en pantalla: placa de nivel, pausa, menú sin subtítulo, cartas grises, victoria, derrota, barco sin salto, tarjetas con el número en la placa.
+- **La mezcla de audio no se verificó de oído** (imposible para el agente). `MUSIC.VOLUME = 0.3` es estimación marcada como tal.
+- Sugerencia pendiente: con `lockWrongCards: true`, `highlightAnswer` quedó redundante — la única carta jugable ya es la única brillante y encima arranca seleccionada. Ponerlo en `false` limpia tres señales para una elección.
+- La cinemática de apertura son 4.8 s antes de poder jugar. Se acorta con `BOAT.DURATION` y `FADE_DURATION`.
+
+#### Relevant Files
+- `.kiro/steering/arte.md` — cómo generar arte. Kiro lo carga solo.
+- `src/constants/FINISHER.js` — BEAM_FROM y ORB_FROM están MEDIDOS. Si se regeneran los sprites, remedir.
+- `src/constants/PHASES.js` — `explainOnMistake` y `lockWrongCards` son los dos flags que revierten decisiones del spec `tutorial-revancha`. Las notas largas están ahí.
+- `src/constants/MUSIC.js` — mapa estado→pista, VOLUME sin verificar
+- `src/components/MenuList/` — el botón compartido entre menú principal y pausa
+- `BRIEF-VIDEO.md` — brief para el guion del video
