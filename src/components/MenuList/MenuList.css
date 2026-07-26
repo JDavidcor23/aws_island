@@ -1,0 +1,47 @@
+/* El botón de menú del juego. Vive acá y no en MainMenu.css porque lo comparten el menú
+   principal y el de pausa.
+   Todo va en `em`: el contenedor (el stage del menú o el del canvas) define el font-size
+   atado a su ancho, así el control se ve igual a 768 px y a 1920 px. */
+.menu-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45em;
+}
+
+.menu-list__option {
+  position: relative;
+  width: min(17.5em, 70vw);
+  aspect-ratio: 240 / 44;   /* proporción nativa de menu_button.png */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  padding: 0;
+  background: url('/assets/art/_gameready/menu_button.png') center / 100% 100% no-repeat;
+  /* Sin esto el navegador suaviza el PNG al escalarlo y arruina el pixel art */
+  image-rendering: pixelated;
+  font-family: inherit;
+  font-size: 0.95em;
+  color: #ffffff;
+  cursor: pointer;
+  text-shadow: 0 0.12em 0 rgba(4, 6, 20, 0.9);
+}
+
+.menu-list__option--focused {
+  color: #ffd94a;
+}
+
+/* El caret ▶ se reserva SIEMPRE el espacio y sólo cambia de opacidad. Si apareciera y
+   desapareciera, el texto de la opción se correría un par de píxeles cada vez que movés el
+   foco y la lista entera vibraría. */
+.menu-list__caret {
+  position: absolute;
+  left: -1.2em;
+  opacity: 0;
+  color: #ffd94a;
+}
+
+.menu-list__option--focused .menu-list__caret {
+  opacity: 1;
+}

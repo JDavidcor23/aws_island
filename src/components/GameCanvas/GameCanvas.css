@@ -1,7 +1,22 @@
+/* El tamaño se mudó del <canvas> a este contenedor, y el canvas ahora lo llena. Hacía
+   falta para poder poner el overlay de pausa encima con `position: absolute; inset: 0`:
+   sobre un <canvas> suelto no hay dónde anclarlo.
+   La fórmula es la misma de antes, y la misma que usa .main-menu para su stage — así el
+   menú y el juego ocupan el MISMO rectángulo y entrar a jugar no da un salto de layout. */
 .game-canvas {
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
+  position: relative;
   width: min(100vw, calc((100vh - 40px) * 16 / 9));
   height: min(calc(100vh - 40px), calc(100vw * 9 / 16));
+  /* Escala tipográfica atada al ancho del canvas: la hereda el overlay de pausa, que está
+     en `em`, para verse igual en cualquier viewport. */
+  font-size: calc(min(100vw, calc((100vh - 40px) * 16 / 9)) / 46);
+}
+
+.game-canvas__surface {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
   cursor: pointer;
 }

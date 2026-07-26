@@ -1,0 +1,87 @@
+/* Panel de CÓMO SE JUEGA / CRÉDITOS. Reemplaza al contenido del menú dentro del mismo
+   stage y sobre el mismo fondo: el layout base (position, flex, padding) lo hereda de
+   `.main-menu .menu-panel` en MainMenu.css, así el panel y el menú entran exactamente
+   en el mismo rectángulo y el fondo no se mueve al abrirlo. */
+.menu-panel__title {
+  margin: 0;
+  font-size: 1.5em;
+  color: #7de0ff;
+  text-shadow: 0 0.1em 0 rgba(4, 6, 20, 0.9);
+}
+
+.menu-panel__frame {
+  width: min(34em, 92%);
+  border: 0.14em solid #7de0ff;
+  border-radius: 0.3em;
+  padding: 1.1em 1.4em;
+  background: rgba(4, 6, 20, 0.82);
+}
+
+/* --- CÓMO SE JUEGA --- */
+.menu-panel__controls {
+  margin: 0 0 0.9em;
+  display: grid;
+  gap: 0.4em;
+}
+
+.menu-panel__control {
+  display: grid;
+  /* La columna de teclas es fija en `em` para que las acciones queden alineadas entre
+     sí: con `auto` cada fila arrancaría en un x distinto según lo largo de su tecla. */
+  grid-template-columns: 9em 1fr;
+  align-items: baseline;
+}
+
+.menu-panel__keys {
+  margin: 0;
+  font-size: 0.85em;
+  color: #ffd94a;
+}
+
+.menu-panel__action {
+  margin: 0;
+  font-size: 0.85em;
+  color: #ffffff;
+}
+
+.menu-panel__body {
+  margin: 0 0 0.5em;
+  font-size: 0.82em;
+  line-height: 1.5;
+  color: #9fb6d8;
+}
+
+.menu-panel__body:last-child {
+  margin-bottom: 0;
+}
+
+/* --- CRÉDITOS --- */
+.menu-panel__team {
+  margin: 0 0 0.9em;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4em 1.2em;
+}
+
+.menu-panel__member {
+  font-size: 0.95em;
+  color: #ffd94a;
+}
+
+/* --- volver --- */
+.menu-panel__back {
+  margin-top: 0.2em;
+  border: 0;
+  padding: 0.5em 1.2em;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.85em;
+  color: #ffd94a;
+  cursor: pointer;
+}
+
+.menu-panel__back:hover {
+  color: #ffffff;
+}

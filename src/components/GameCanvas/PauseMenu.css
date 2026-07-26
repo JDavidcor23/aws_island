@@ -1,0 +1,34 @@
+/* Overlay de pausa. Cubre el canvas y nada más: `inset: 0` sobre .game-canvas, que es el
+   contenedor con position: relative.
+   Los botones NO se estilan acá — vienen de components/MenuList/, el mismo componente que
+   usa el menú principal. Este archivo sólo pone el velo, el título y la ayuda. */
+.pause-menu {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  background: rgba(4, 6, 20, 0.8);
+  /* La escala tipográfica la hereda de .game-canvas, que la ata al ancho del canvas: así el
+     menú se ve igual a 768 px y a 1920 px en vez de quedar diminuto en pantallas grandes. */
+  font-size: 1em;
+}
+
+.pause-menu__title {
+  margin: 0 0 0.7em;
+  font-size: 1.6em;
+  letter-spacing: 0.18em;
+  /* letter-spacing agrega el espacio DESPUÉS del último carácter, así que sin este padding
+     el título queda corrido a la izquierda del centro real. */
+  padding-left: 0.18em;
+  color: #7de0ff;
+  text-shadow: 0 0.1em 0 rgba(4, 6, 20, 0.9);
+}
+
+.pause-menu__hint {
+  margin: 0.7em 0 0;
+  font-size: 0.68em;
+  color: #9fb6d8;
+}
