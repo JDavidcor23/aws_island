@@ -9,19 +9,93 @@ const ensureIntro = (G) => {
   return G.intro
 }
 
+// Cambiar de paso SIEMPRE por acá: stepTime tiene que volver a cero en el mismo frame en
+// que cambia el paso, o el paso nuevo arranca con el tiempo acumulado del anterior y se
+// saltea entero. Es el bug más fácil de cometer con una sub-máquina de tiempos.
+const goToStep = (intro, step) => {
+  intro.step = step
+  intro.stepTime = 0
+}
+
+// --- geometría de la llegada ---
+// Se exporta para que drawIntroScene dibuje EXACTAMENTE donde la lógica cree que está el
+// bote. Con las cuentas duplicadas en los dos lados, el día que se tunee DOCK_X el héroe
+// salta desde un bote que ya no está ahí.
+
+const easeOutCubic = (t) => 1 - (1 - t) ** 3
+
+// Centro del bote en X. Desacelera al entrar: un bote que llega a velocidad constante y
+// frena de golpe no se lee como un bote.
+export const boatX = (intro) => {
+  const { START_X, DOCK_X, DURATION } = INTRO_SCENE.BOAT
+  if (intro.step === INTRO_STEPS.BOAT_IN) {
+    const progress = easeOutCubic(Math.min(1, intro.stepTime / DURATION))
+    return START_X + (DOCK_X - START_X) * progress
+  }
+  return DOCK_X
+}
+
+// Posición del héroe durante la llegada: parado adentro del bote, y nada más.
+// Devuelve { x, y } con y = la línea donde apoya los PIES.
+export const heroBoatPos = (intro) => {
+  const { BOAT } = INTRO_SCENE
+  return {
+    x: boatX(intro) + BOAT.HERO_DX,
+    y: BOAT.WATERLINE_Y + BOAT.HERO_FEET_DY,
+  }
+}
+
+// 0..1 de opacidad del negro. Sube hasta 1 en la primera mitad del fade y baja en la
+// segunda: la pantalla queda completamente negra exactamente en el medio, que es donde
+// drawIntroScene cambia de fondo.
+export const fadeAlpha = (intro) => {
+  if (intro.step !== INTRO_STEPS.FADE) return 0
+  const half = INTRO_SCENE.FADE_DURATION / 2
+  return intro.stepTime < half
+    ? Math.min(1, intro.stepTime / half)
+    : Math.max(0, 1 - (intro.stepTime - half) / half)
+}
+
+// La segunda mitad del fade ya está mostrando la aldea, no la costa
+export const fadePastMidpoint = (intro) =>
+  intro.step === INTRO_STEPS.FADE && intro.stepTime >= INTRO_SCENE.FADE_DURATION / 2
+
 // Se llama cada frame desde GameEngine.update() mientras G.state === INTRO
 export const updateIntroScene = (engine, dt) => {
   const intro = ensureIntro(engine.G)
+  intro.stepTime += dt
 
   switch (intro.step) {
+    case INTRO_STEPS.BOAT_IN: {
+      const { DURATION, HOLD } = INTRO_SCENE.BOAT
+      // Un swell de oleaje al salir y otro al llegar. Dos y no un loop: el oleaje es
+      // textura, y a este volumen repetirlo seguido sólo suma zumbido.
+      if (intro.stepTime - dt <= 0) sfxService.wave()
+      if (intro.stepTime >= DURATION && intro.stepTime - dt < DURATION) sfxService.wave()
+      if (intro.stepTime >= DURATION + HOLD) goToStep(intro, INTRO_STEPS.FADE)
+      break
+    }
+
+    case INTRO_STEPS.FADE:
+      if (intro.stepTime >= INTRO_SCENE.FADE_DURATION) {
+        goToStep(intro, INTRO_STEPS.WALK_IN)
+        // El héroe vuelve al borde izquierdo: la caminata por la aldea es una escena
+        // nueva, no la continuación del salto. El corte a negro es lo que compra ese
+        // reposicionamiento sin que se lea como un teleport.
+        intro.heroX = INTRO_SCENE.WALK_START_X
+        intro.walkTime = 0
+      }
+      break
+
     case INTRO_STEPS.WALK_IN:
       intro.heroX += INTRO_SCENE.WALK_SPEED * dt
       intro.walkTime += dt
       if (intro.heroX >= INTRO_SCENE.HERO_MEET_X) {
         intro.heroX = INTRO_SCENE.HERO_MEET_X
-        intro.step = INTRO_STEPS.TALK
+        goToStep(intro, INTRO_STEPS.TALK)
       }
       break
+
     case INTRO_STEPS.TALK: {
       intro.revealTime += dt
       // Tecleo. Va acá y NO en el draw a propósito: el draw tiene que quedar libre
@@ -40,6 +114,7 @@ export const updateIntroScene = (engine, dt) => {
       intro.typedChars = revealed
       break
     }
+
     case INTRO_STEPS.WALK_OUT:
       intro.heroX += INTRO_SCENE.WALK_SPEED * dt
       intro.walkTime += dt
@@ -51,9 +126,17 @@ export const updateIntroScene = (engine, dt) => {
 }
 
 // Se llama desde el caso INTRO de advance() cuando el jugador aprieta ESPACIO
-// Primer SPACE: completa la línea instantáneamente. Segundo SPACE: avanza a la siguiente.
 export const advanceIntroScene = (engine) => {
   const intro = ensureIntro(engine.G)
+
+  // Durante la llegada, ESPACIO adelanta el bote hasta el muelle en vez de no hacer nada.
+  // Mismo criterio que el primer ESPACIO del typewriter: completa el beat actual de una,
+  // no se lo saltea. El que quiere saltear la intro entera tiene la T.
+  if (intro.step === INTRO_STEPS.BOAT_IN) {
+    intro.stepTime = INTRO_SCENE.BOAT.DURATION
+    return
+  }
+
   if (intro.step !== INTRO_STEPS.TALK) return
 
   // ¿La línea actual ya se reveló por completo?
@@ -71,7 +154,7 @@ export const advanceIntroScene = (engine) => {
     // Segundo SPACE: avanzar a la siguiente línea
     intro.line += 1
     if (intro.line >= INTRO_LINES.length) {
-      intro.step = INTRO_STEPS.WALK_OUT
+      goToStep(intro, INTRO_STEPS.WALK_OUT)
       intro.walkTime = 0
     } else {
       intro.revealTime = 0
