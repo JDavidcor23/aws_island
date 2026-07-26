@@ -1,4 +1,5 @@
 import { CARDS } from '../../constants/CARDS'
+import { COMBAT_PACING } from '../../constants/COMBAT_PACING'
 import { LAYOUT } from '../../constants/LAYOUT'
 import { currentRound } from '../battle/battleLogic'
 import { drawTextOutlined } from './textHelpers'
@@ -52,6 +53,34 @@ export const drawCards = (engine) => {
     // nombre SIEMPRE legible bajo la carta, alternando altura para no chocar
     const labelColor = isUsed ? '#777' : isSelected ? '#ffd94a' : '#ffffff'
     drawTextOutlined(ctx, CARDS[id].label, cx + w / 2, cy + h + 10 + (i % 2) * 11, 8, labelColor)
+  }
+
+  // Timer visual: arco que se vacía (solo si la ronda tiene timer)
+  if (G.round >= COMBAT_PACING.FIRST_TIMED_ROUND) {
+    const remaining = Math.max(0, 1 - G.t / COMBAT_PACING.CHOOSE_TIME_LIMIT)
+    const cx = LAYOUT.W / 2
+    const cy = y - 34
+    const radius = 14
+    const warn = G.t >= (COMBAT_PACING.CHOOSE_TIME_LIMIT - COMBAT_PACING.TIMEOUT_WARN_THRESHOLD)
+    const visible = !warn || Math.floor(G.time * 4) % 2 === 0
+
+    if (visible) {
+      // Fondo del arco
+      ctx.beginPath()
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2)
+      ctx.strokeStyle = '#3d4763'
+      ctx.lineWidth = 4
+      ctx.stroke()
+      // Arco que se vacía
+      ctx.beginPath()
+      ctx.arc(cx, cy, radius, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * remaining)
+      ctx.strokeStyle = warn ? '#ff5544' : '#7de0ff'
+      ctx.lineWidth = 4
+      ctx.stroke()
+      // Número de segundos restantes
+      const secs = Math.max(0, Math.ceil(COMBAT_PACING.CHOOSE_TIME_LIMIT - G.t))
+      drawTextOutlined(ctx, String(secs), cx, cy + 1, 11, warn ? '#ff5544' : '#ffffff')
+    }
   }
 }
 

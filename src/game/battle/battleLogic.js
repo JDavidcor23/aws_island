@@ -3,7 +3,9 @@ import { ROUNDS } from '../../constants/ROUNDS'
 import { CARD_IDS } from '../../constants/CARDS'
 import { LAYOUT } from '../../constants/LAYOUT'
 import { TIMING } from '../../constants/TIMING'
+import { COMBAT_PACING } from '../../constants/COMBAT_PACING'
 import { sfxService } from '../../services/sfx.service'
+import { advanceIntroScene } from '../scenes/introScene'
 
 // Reglas del combate: rondas, elección de carta, bloqueo con timing y vida.
 // Todas las funciones reciben el engine y mutan su estado G (nunca React).
@@ -49,6 +51,22 @@ export const loseHeart = (engine) => {
     sfxService.miss()
   }
   return G.hearts > 0
+}
+
+export const updateChooseTimer = (engine) => {
+  const { G, effects } = engine
+  if (G.state !== GAME_STATES.CHOOSE) return
+  if (G.round < COMBAT_PACING.FIRST_TIMED_ROUND) return
+  if (G.t >= COMBAT_PACING.CHOOSE_TIME_LIMIT) {
+    // Timeout: mismo efecto que un Miss — pierde corazón y el ataque entra
+    effects.addFloat(LAYOUT.W / 2, 120, '¡Se acabó el tiempo!', '#ff5544', 13)
+    sfxService.miss()
+    loseHeart(engine)
+    if (G.hearts > 0) {
+      G.atk = { phase: 'hit', t: 0, x: LAYOUT.BOSS.x, y: LAYOUT.BOSS.y, blocked: 'miss', warned: false }
+      engine.setState(GAME_STATES.RESOLVE)
+    }
+  }
 }
 
 export const attackSpeed = (G) =>
@@ -132,8 +150,7 @@ export const advance = (engine) => {
       engine.setState(GAME_STATES.INTRO)
       break
     case GAME_STATES.INTRO:
-      sfxService.confirm()
-      startRound(engine)
+      advanceIntroScene(engine)
       break
     case GAME_STATES.PROBLEM:
       if (G.t > TIMING.PROBLEM_MIN_WAIT) {
