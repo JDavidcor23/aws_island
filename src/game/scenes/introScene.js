@@ -22,9 +22,24 @@ export const updateIntroScene = (engine, dt) => {
         intro.step = INTRO_STEPS.TALK
       }
       break
-    case INTRO_STEPS.TALK:
+    case INTRO_STEPS.TALK: {
       intro.revealTime += dt
+      // Tecleo. Va acá y NO en el draw a propósito: el draw tiene que quedar libre
+      // de efectos colaterales, o el día que se dibuje dos veces por frame el audio
+      // se duplica. Sonar solo al CRUZAR un múltiplo de TYPE_SFX_EVERY es lo que
+      // evita que se dispare un blip por frame en vez de uno por tecla.
+      const text = INTRO_LINES[intro.line].text
+      const revealed = Math.min(
+        text.length,
+        Math.floor(intro.revealTime * INTRO_SCENE.REVEAL_CHARS_PER_SEC),
+      )
+      const every = INTRO_SCENE.TYPE_SFX_EVERY
+      if (Math.floor(revealed / every) > Math.floor(intro.typedChars / every)) {
+        sfxService.type()
+      }
+      intro.typedChars = revealed
       break
+    }
     case INTRO_STEPS.WALK_OUT:
       intro.heroX += INTRO_SCENE.WALK_SPEED * dt
       intro.walkTime += dt
@@ -47,8 +62,11 @@ export const advanceIntroScene = (engine) => {
   const isComplete = revealedChars >= currentText.length
 
   if (!isComplete) {
-    // Primer SPACE: completar la línea instantáneamente
+    // Primer SPACE: completar la línea instantáneamente.
+    // typedChars va al final junto con revealTime: si se dejara atrás, el update del
+    // frame siguiente vería un salto de 40 caracteres y soltaría un blip de más.
     intro.revealTime = currentText.length / INTRO_SCENE.REVEAL_CHARS_PER_SEC
+    intro.typedChars = currentText.length
   } else {
     // Segundo SPACE: avanzar a la siguiente línea
     intro.line += 1
@@ -57,6 +75,7 @@ export const advanceIntroScene = (engine) => {
       intro.walkTime = 0
     } else {
       intro.revealTime = 0
+      intro.typedChars = 0
       sfxService.confirm()
     }
   }

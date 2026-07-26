@@ -4,14 +4,20 @@ import { drawText, drawTextOutlined, wrapText } from './textHelpers'
 
 // Helper: ancla sprites por los PIES, no por el centro.
 // La esquina superior va en GROUND_Y - size (los pies tocan GROUND_Y).
-const drawGrounded = (ctx, img, centerX, size) => {
-  ctx.drawImage(
-    img,
-    Math.round(centerX - size / 2),
-    Math.round(INTRO_SCENE.GROUND_Y - size),
-    size,
-    size,
-  )
+// `mirror` invierte el sprite en X: se traslada al borde DERECHO del destino antes
+// de escalar en -1, porque scale(-1) sin ese translate dibuja fuera del canvas.
+const drawGrounded = (ctx, img, centerX, size, mirror = false) => {
+  const x = Math.round(centerX - size / 2)
+  const y = Math.round(INTRO_SCENE.GROUND_Y - size)
+  if (!mirror) {
+    ctx.drawImage(img, x, y, size, size)
+    return
+  }
+  ctx.save()
+  ctx.translate(x + size, y)
+  ctx.scale(-1, 1)
+  ctx.drawImage(img, 0, 0, size, size)
+  ctx.restore()
 }
 
 export const drawIntroScene = (engine) => {
@@ -31,7 +37,13 @@ export const drawIntroScene = (engine) => {
   const mouthOpen = Math.floor(G.time / INTRO_SCENE.PENGUIN_TALK_FRAME_DURATION) % 2 === 0
   const penguinImg = talking && mouthOpen ? IMG.penguinTalk1 : IMG.penguinTalk2
   if (penguinImg) {
-    drawGrounded(ctx, penguinImg, INTRO_SCENE.PENGUIN_X, INTRO_SCENE.PENGUIN_SIZE)
+    drawGrounded(
+      ctx,
+      penguinImg,
+      INTRO_SCENE.PENGUIN_X,
+      INTRO_SCENE.PENGUIN_SIZE,
+      INTRO_SCENE.PENGUIN_FACES_HERO,
+    )
   }
 
   // 3. Héroe — frame de caminata si camina, heroSide si quieto

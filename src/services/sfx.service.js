@@ -43,4 +43,8 @@ export const sfxService = {
   },
   fire: () => beep(300, 0.35, 'sawtooth', 0.07, -180),
   reflect: () => beep(520, 0.15, 'square', 0.07, 400),
+  // Tecla de máquina de escribir: cortísimo, agudo y MUY bajo de volumen.
+  // Se dispara varias veces por segundo mientras corre el typewriter, así que
+  // cualquier cosa más larga o más fuerte que esto deja de ser textura y molesta.
+  type: () => beep(1500, 0.015, 'square', 0.022, -400),
 }
