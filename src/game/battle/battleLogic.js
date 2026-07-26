@@ -2,15 +2,15 @@ import { GAME_STATES } from '../../constants/GAME_STATES'
 import { ROUNDS } from '../../constants/ROUNDS'
 import { CARD_IDS } from '../../constants/CARDS'
 import { LAYOUT } from '../../constants/LAYOUT'
+import { PHASE_CONFIG, PHASES } from '../../constants/PHASES'
 import { TIMING } from '../../constants/TIMING'
-import { COMBAT_PACING } from '../../constants/COMBAT_PACING'
 import { sfxService } from '../../services/sfx.service'
 import { advanceIntroScene } from '../scenes/introScene'
 
 // Reglas del combate: rondas, elección de carta, bloqueo con timing y vida.
 // Todas las funciones reciben el engine y mutan su estado G (nunca React).
 
-export const currentRound = (G) => ROUNDS[G.round % ROUNDS.length]
+export const currentRound = (G) => ROUNDS[G.order[G.round % ROUNDS.length]]
 
 const shuffle = (arr) => {
   const a = [...arr]
@@ -23,6 +23,17 @@ const shuffle = (arr) => {
 
 export const startRound = (engine) => {
   const { G } = engine
+  G.lastResult = null   // trampa 1: sin esto un miss pasado hace que needsExplain mienta en todas las rondas siguientes
+  G.infoCard = null     // trampa 2: sin esto el panel queda pintado sobre PROBLEM y se come todo el input
+  // infoSeen es estado POR RONDA, y startRound es su único dueño.
+  // El gate del tutorial tiene que pedir la lectura en las cuatro rondas: leer
+  // "Elasticidad Rápida" en el problema 1 no te dice nada sobre si sirve para el
+  // problema 3, y ahí está justamente lo que hay que aprender a descartar.
+  // Sin este reset el gate se apagaba solo: para la ronda 3 ya habías visto todas las
+  // cartas y no volvía a abrir ni una. Y al revés, no resetearlo NUNCA obligaría a
+  // releer la misma carta varias veces dentro de una misma ronda: fricción sin nada
+  // que enseñar.
+  G.infoSeen = new Set()
   G.cards = shuffle(CARD_IDS)
   G.wrong = new Set()
   G.sel = 0
@@ -56,11 +67,17 @@ export const loseHeart = (engine) => {
 export const updateChooseTimer = (engine) => {
   const { G, effects } = engine
   if (G.state !== GAME_STATES.CHOOSE) return
-  if (G.round < COMBAT_PACING.FIRST_TIMED_ROUND) return
-  if (G.t >= COMBAT_PACING.CHOOSE_TIME_LIMIT) {
+  // El límite lo decide la fase, no la ronda: null = sin temporizador (TUTORIAL)
+  const limit = PHASE_CONFIG[G.phase].chooseTimeLimit
+  if (limit === null) return
+  if (G.t >= limit) {
     // Timeout: mismo efecto que un Miss — pierde corazón y el ataque entra
     effects.addFloat(LAYOUT.W / 2, 120, '¡Se acabó el tiempo!', '#ff5544', 13)
     sfxService.miss()
+    // needsExplain lee lastResult: sin esto un timeout te come un corazón y encadena
+    // a la ronda siguiente SIN explicarte nada. Un timeout no resolvió el problema.
+    G.lastResult = 'miss'
+    // Solo llega acá si la fase tiene timer, y esa es REMATCH: no necesita guard
     loseHeart(engine)
     if (G.hearts > 0) {
       G.atk = { phase: 'hit', t: 0, x: LAYOUT.BOSS.x, y: LAYOUT.BOSS.y, blocked: 'miss', warned: false }
@@ -70,13 +87,32 @@ export const updateChooseTimer = (engine) => {
 }
 
 export const attackSpeed = (G) =>
-  TIMING.ATK_BASE_SPEED + Math.min(G.round, TIMING.ATK_SPEED_MAX_ROUNDS) * TIMING.ATK_SPEED_PER_ROUND
+  // atkSpeedMult escala la velocidad por fase: 1 en TUTORIAL, 1.35 en REMATCH
+  (TIMING.ATK_BASE_SPEED + Math.min(G.round, TIMING.ATK_SPEED_MAX_ROUNDS) * TIMING.ATK_SPEED_PER_ROUND) *
+  PHASE_CONFIG[G.phase].atkSpeedMult
 
 export const pickCard = (engine, index) => {
   const { G, effects } = engine
   const id = G.cards[index]
   if (!id || G.wrong.has(id)) return
-  if (id === currentRound(G).ans) {
+  const cfg = PHASE_CONFIG[G.phase]
+
+  // Gate del tutorial: una carta que no leíste no se juega, se ABRE.
+  // Vale para las cuatro rondas y también para las cartas equivocadas — que es justo
+  // el punto: leerlas es cómo descubrís que no son la respuesta.
+  // Antes esto pasaba solo en la ronda 1, solo sobre la carta correcta, y en vez de
+  // abrir el panel mostraba un cartel pidiendo que apretaras I. Nadie asocia un cartel
+  // en el medio de la pantalla con la carta que tocó; el panel abriéndose sobre esa
+  // carta, sí. No consume el turno: el panel queda abierto y el segundo gesto sobre
+  // ella la confirma (confirmCardInfo).
+  if (cfg.openInfoOnPick && !G.infoSeen.has(id)) {
+    openCardInfo(engine, index)
+    return
+  }
+
+  const isCorrect = id === currentRound(G).ans
+
+  if (isCorrect) {
     sfxService.confirm()
     G.chosen = id
     effects.addFloat(LAYOUT.W / 2, 120, '¡CORRECTO! ¡Prepará el bloqueo!', '#7dff7d', 13)
@@ -85,7 +121,9 @@ export const pickCard = (engine, index) => {
   } else {
     G.wrong.add(id)
     effects.addFloat(LAYOUT.W / 2, 120, '¡Esa no resuelve ESTE problema!', '#ff8866', 11)
-    loseHeart(engine)
+    // El castigo depende de la fase: en TUTORIAL solo suena el error, no cuesta vida
+    if (cfg.loseHeartOnWrong) loseHeart(engine)
+    else sfxService.wrong()
   }
 }
 
@@ -125,6 +163,13 @@ export const timingPress = (engine) => {
   G.lastResult = result
   atk.blocked = result
 
+  // Aviso de barra llena. Sin esto el remate aparece de la nada al cerrar la ronda y
+  // el jugador nunca entiende que fue ÉL el que lo cargó bloqueando. Se dispara una
+  // sola vez porque endRound remata al terminar esta misma ronda.
+  if (G.special >= TIMING.SPECIAL_MAX && PHASE_CONFIG[G.phase].specialTriggersFinisher) {
+    effects.addFloat(LAYOUT.W / 2, 96, '¡BARRA LLENA — REMATE LISTO!', '#ffe98a', 14)
+  }
+
   if (result !== 'miss') {
     // bloqueado: el ataque se refleja hacia el jefe
     sfxService.reflect()
@@ -141,6 +186,89 @@ export const timingPress = (engine) => {
     atk.phase = 'hit'
   }
 }
+
+export const openCardInfo = (engine, index) => {
+  const { G } = engine
+  const id = G.cards[index]
+  // Sin id no hay nada que mostrar (carta vacía o índice fuera de rango)
+  if (!id) return
+  G.infoCard = id
+  G.infoSeen.add(id)   // lo que abre el gate del problema 1 en la tarea 9
+  // La selección solo se mueve si la carta sigue jugable: dejarla sobre una
+  // carta descartada la vuelve inelegible y ESPACIO deja de responder.
+  if (!G.wrong.has(id)) G.sel = index
+  sfxService.select()
+}
+
+export const closeCardInfo = (engine) => {
+  engine.G.infoCard = null
+  sfxService.confirm()
+}
+
+// En el tutorial el panel ES el paso de confirmación: la carta que estás leyendo es la
+// que se juega. El índice se resuelve desde infoCard y NO desde G.sel, porque el badge
+// '?' puede abrir una carta distinta a la que está seleccionada.
+export const confirmCardInfo = (engine) => {
+  const { G } = engine
+  const index = G.cards.indexOf(G.infoCard)
+  if (index < 0) return
+  // Cerrar ANTES de jugar: si pickCard rechaza la carta (era la equivocada) no hay
+  // cambio de pantalla, y setState —que es lo único que limpia infoCard— no corre.
+  // Sin esta línea el panel quedaría pintado encima comiéndose todo el input.
+  G.infoCard = null
+  pickCard(engine, index)
+}
+
+// --- ciclo de ronda y transición de fase ---
+
+// La revancha solo frena si el jugador erró carta o falló el bloqueo
+export const needsExplain = (G) =>
+  PHASE_CONFIG[G.phase].explainAlways || G.wrong.size > 0 || G.lastResult === 'miss'
+
+// Cierra la ronda: remate por especial, fin del tutorial, o siguiente problema
+export const endRound = (engine) => {
+  const { G } = engine
+  const cfg = PHASE_CONFIG[G.phase]
+
+  // Remate por especial (solo REMATCH — trampa 7: sin el guard el tutorial se gana con 4 perfects)
+  if (cfg.specialTriggersFinisher && G.special >= TIMING.SPECIAL_MAX) {
+    engine.setState(GAME_STATES.FINISH_LINE)
+    return
+  }
+
+  G.round++
+
+  // Tutorial completo: las 4 rondas pasaron
+  if (G.phase === PHASES.TUTORIAL && G.round >= ROUNDS.length) {
+    G.tutorialDone = true
+    engine.setState(GAME_STATES.TUTORIAL_CLEAR)
+    return
+  }
+
+  // En revancha las rondas siguen cíclicas hasta ganar o perder
+  if (G.round >= ROUNDS.length) G.extraRound = true
+  startRound(engine)
+}
+
+// El ÚNICO camino a la fase 2: resetea vida, especial y mezcla el orden
+export const beginRematch = (engine) => {
+  const { G } = engine
+  G.phase = PHASES.REMATCH        // ANTES de startRound: PROBLEM lee la config de la fase
+  G.round = 0
+  G.extraRound = false
+  G.hearts = TIMING.MAX_HEARTS
+  G.special = 0
+  G.perfects = 0
+  // El jefe se reinició: su barra arranca llena otra vez. undefined y no 1 porque el
+  // dueño del valor es drawBossHealth y su init perezoso — acá solo lo olvidamos.
+  // Sin esto la barra entra a la revancha con el 25% en el que quedó el tutorial y la
+  // primera ronda se ve rellenándose sola, como un glitch.
+  G.bossHpDisplay = undefined
+  G.order = shuffle([...Array(ROUNDS.length).keys()])
+  startRound(engine)   // startRound es el dueño de infoSeen: no hace falta limpiarlo acá
+}
+
+// --- avance de estados ---
 
 export const advance = (engine) => {
   const { G } = engine
@@ -160,12 +288,18 @@ export const advance = (engine) => {
       break
     case GAME_STATES.EXPLAIN:
       sfxService.confirm()
-      if (G.special >= TIMING.SPECIAL_MAX) {
-        engine.setState(GAME_STATES.FINISH_LINE)
-      } else {
-        G.round++
-        if (G.round >= ROUNDS.length) G.extraRound = true
-        startRound(engine)
+      endRound(engine)
+      break
+    case GAME_STATES.TUTORIAL_CLEAR:
+      if (G.t > TIMING.PROBLEM_MIN_WAIT) {
+        sfxService.confirm()
+        engine.setState(GAME_STATES.REMATCH_INTRO)
+      }
+      break
+    case GAME_STATES.REMATCH_INTRO:
+      if (G.t > TIMING.PROBLEM_MIN_WAIT) {
+        sfxService.shout()
+        beginRematch(engine)
       }
       break
     case GAME_STATES.FINISH_LINE:

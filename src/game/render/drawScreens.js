@@ -1,27 +1,19 @@
 import { GAME_STATES } from '../../constants/GAME_STATES'
 import { LAYOUT } from '../../constants/LAYOUT'
+import { PHASES } from '../../constants/PHASES'
 import { UI_TEXTS } from '../../constants/UI_TEXTS'
 import { currentRound } from '../battle/battleLogic'
 import { drawBoss, drawHero } from './drawScene'
-import { drawText, drawTextOutlined, wrapText } from './textHelpers'
+import { drawDialogue } from './drawDialogue'
+import { drawText, drawTextOutlined } from './textHelpers'
 import { drawIntroScene } from './drawIntroScene'
+import { drawRematchIntroScreen, drawTutorialClearScreen } from './drawPhaseScreens'
 
 // Pantallas y overlays: título, diálogos, remate, victoria y derrota.
 
-export const drawDialogue = (engine, speaker, msg, blink = true) => {
-  const { ctx, IMG, G } = engine
-  const { w: dw, h: dh } = LAYOUT.DIALOGUE
-  const dx = (LAYOUT.W - dw) / 2
-  const dy = LAYOUT.H - dh - 6
-  if (IMG.dlg) ctx.drawImage(IMG.dlg, dx, dy, dw, dh)
-  drawText(ctx, speaker, dx + 80, dy + 16, 9, '#f5e6c8')
-  wrapText(msg, 40).forEach((line, i) => {
-    drawText(ctx, line, LAYOUT.W / 2, dy + 46 + i * 16, 12, '#4a3520')
-  })
-  if (blink && Math.floor(G.time * 2) % 2 === 0) {
-    drawText(ctx, '▼ ESPACIO', dx + dw - 52, dy + dh - 14, 8, '#8a6d3f')
-  }
-}
+// drawDialogue se mudó a su propio módulo para no cerrar un ciclo con
+// drawPhaseScreens. Se re-exporta porque era parte de la API de este archivo.
+export { drawDialogue }
 
 const drawPenguin = (engine) => {
   const { ctx, IMG } = engine
@@ -57,7 +49,19 @@ export const drawExplainScreen = (engine) => {
   const { G } = engine
   drawPenguin(engine)
   const prefix = G.lastResult === 'miss' ? UI_TEXTS.EXPLAIN_MISS_PREFIX : UI_TEXTS.EXPLAIN_HIT_PREFIX
-  drawDialogue(engine, 'MENTOR 🐧', prefix + currentRound(G).expl)
+  // El primer EXPLAIN del tutorial es el único momento del juego en que el jugador acaba
+  // de sentir que la ayuda vino de AFUERA de la isla: ahí se nombra la nube en lugar de
+  // explicar la característica. Un concepto por momento.
+  //
+  // G.round todavía vale 0 acá y no hay off-by-one: endRound incrementa la ronda DESPUÉS
+  // de este EXPLAIN (advance -> case EXPLAIN -> endRound -> G.round++).
+  //
+  // Y los dos prefijos de arriba alcanzan porque en el tutorial esta pantalla solo se
+  // llega con la carta CORRECTA: pickCard únicamente pasa a TIMING si acertaste, y el
+  // tutorial no tiene timeout. Lo único que pudo fallar es el timing.
+  const isFirstTutorialExplain = G.phase === PHASES.TUTORIAL && G.round === 0
+  const body = isFirstTutorialExplain ? UI_TEXTS.TUTORIAL_CLOUD_REVEAL : currentRound(G).expl
+  drawDialogue(engine, 'MENTOR 🐧', prefix + body)
 }
 
 export const drawFinishLineScreen = (engine) => {
@@ -101,9 +105,11 @@ export const drawVictoryScreen = (engine) => {
     effects.emit(Math.random() * LAYOUT.W, -5, 1, ['#ffd94a', '#7de0ff', '#7dff7d', '#ff9d7a'], 10, 2.5)
   }
   drawTextOutlined(ctx, '¡LA ISLA REVIVE!', LAYOUT.W / 2, 60, 28, '#ffd94a')
-  drawTextOutlined(ctx, 'Bienvenido al mundo Cloud.', LAYOUT.W / 2, 92, 13, '#ffffff')
+  drawTextOutlined(ctx, UI_TEXTS.VICTORY_PAYOFF, LAYOUT.W / 2, 92, 13, '#ffffff')
   drawTextOutlined(ctx, `Perfects: ${G.perfects}   Corazones: ${G.hearts}/4`, LAYOUT.W / 2, 120, 11, '#ffffff')
-  drawTextOutlined(ctx, '🔒 Isla 1: EC2 — Próximamente...', LAYOUT.W / 2, LAYOUT.H - 60, 13, '#9fb6d8')
+  // Acá se nombra Amazon por primera y única vez fuera de la intro. AWS NO se dice en la
+  // Isla 0: entra en la Isla 1, junto con el primer servicio con nombre propio.
+  drawTextOutlined(ctx, UI_TEXTS.VICTORY_NEXT_ISLAND, LAYOUT.W / 2, LAYOUT.H - 60, 13, '#9fb6d8')
   if (Math.floor(G.time * 2) % 2 === 0) {
     drawTextOutlined(ctx, 'R para jugar de nuevo', LAYOUT.W / 2, LAYOUT.H - 32, 10, '#ffd94a')
   }
@@ -113,8 +119,8 @@ export const drawDefeatScreen = (engine) => {
   const { ctx, G } = engine
   ctx.fillStyle = 'rgba(10,4,4,0.72)'
   ctx.fillRect(0, 0, LAYOUT.W, LAYOUT.H)
-  drawTextOutlined(ctx, 'El Legacy Server sigue en pie...', LAYOUT.W / 2, 140, 18, '#ff8866')
-  drawTextOutlined(ctx, 'Pero ya sabés cómo vencerlo.', LAYOUT.W / 2, 168, 12, '#ffffff')
+  drawTextOutlined(ctx, UI_TEXTS.DEFEAT_TITLE, LAYOUT.W / 2, 140, 18, '#ff8866')
+  drawTextOutlined(ctx, UI_TEXTS.DEFEAT_STAKE, LAYOUT.W / 2, 168, 12, '#ffffff')
   if (Math.floor(G.time * 2) % 2 === 0) {
     drawTextOutlined(ctx, 'R para reintentar', LAYOUT.W / 2, 220, 12, '#ffd94a')
   }
@@ -129,6 +135,8 @@ export const SCREEN_DRAWERS = {
   [GAME_STATES.INTRO]: drawIntroScene,
   [GAME_STATES.PROBLEM]: drawProblemScreen,
   [GAME_STATES.EXPLAIN]: drawExplainScreen,
+  [GAME_STATES.TUTORIAL_CLEAR]: drawTutorialClearScreen,
+  [GAME_STATES.REMATCH_INTRO]: drawRematchIntroScreen,
   [GAME_STATES.FINISH_LINE]: drawFinishLineScreen,
   [GAME_STATES.FINISH_ANIM]: drawFinishAnimScreen,
   [GAME_STATES.VICTORY]: drawVictoryScreen,

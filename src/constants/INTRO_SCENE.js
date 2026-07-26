@@ -15,6 +15,7 @@ export const INTRO_SCENE = {
     line: 0,
     walkTime: 0,
     revealTime: 0,
+    typedChars: 0,   // último carácter que ya sonó: sin esto el blip se repite por frame
   },
 
   // geometría en el espacio lógico del canvas (640x360)
@@ -36,28 +37,60 @@ export const INTRO_SCENE = {
 
   FALLBACK_BG: '#2b2333',   // si el fondo A-1 no cargó
   REVEAL_CHARS_PER_SEC: 30,   // caracteres revelados por segundo (efecto typewriter)
+
+  // El pingüino mira a la derecha en su sprite, pero el héroe frena en HERO_MEET_X
+  // (150) y el pingüino está en PENGUIN_X (250): o sea, a su IZQUIERDA. Sin espejar
+  // el sprite, el mentor le habla al vacío durante toda la escena.
+  PENGUIN_FACES_HERO: true,
+
+  // Un blip por carácter a 30 char/s es ruido blanco, no una máquina de escribir.
+  // Uno cada 3 caracteres da ~10 golpes por segundo: el ritmo de alguien tecleando.
+  TYPE_SFX_EVERY: 3,
 }
 
-// Las 3 cosas que el jugador necesita saber, en orden.
+// Solo CONTEXTO y VOCABULARIO. Las mecánicas siguen sin explicarse acá: las enseña la
+// pelea tutorial jugando, que para eso te resalta la carta y te hace leer su ficha.
+//
+// Lo que sí entra son dos de las cuatro palabras del juego: on-premise y legacy.
+// No son mecánicas, son el contenido. Y entran acá porque `scene_island_path.png` tiene
+// los siete elementos del pueblo enfermo en cuadro: el molino roto, el canal verde, las
+// casas tapiadas y la torre echando humo sobre la colina. La regla es que ninguna palabra
+// técnica se nombra sin algo en pantalla que la sostenga — si no se ve, no se nombra.
+//
+// El orden 2 -> 3 -> 4 no es negociable: primero VE la máquina y lo que hacía, después se
+// le nombra dónde está (on-premise), después por qué falla (legacy). El sustantivo llega
+// último, cuando ya hay una imagen a la que pegarlo.
+//
+// ⚠️ Límite duro medido: drawIntroScene envuelve a 40 caracteres y la caja aguanta 4
+// renglones — el 5º cae encima del '▼ ESPACIO'. Las seis líneas son de 3 renglones.
+// Si alargás una, volvé a medirla.
+//
+// Ver .kiro/specs/historia-isla-0/design.md
 export const INTRO_LINES = [
   {
     speaker: 'MENTOR 🐧',
-    text: 'Al fin llegaste. ¿Ves esa torre al fondo? Es el Legacy Server, y ya no da abasto con la isla.',
+    text: 'Primera isla, novato. Mirá bien: el molino roto, el agua verde, las casas tapiadas. Todo esto funcionaba.',
   },
   {
     speaker: 'MENTOR 🐧',
-    text: 'No lo vas a vencer a golpes. Cada vez que ataque va a gritar un PROBLEMA concreto.',
+    text: '¿Ves esa torre que echa humo allá arriba? Una sola máquina hacía TODO acá. La luz, el agua, el molino.',
   },
   {
     speaker: 'MENTOR 🐧',
-    text: 'Vos elegís la característica de la nube que resuelve ESE problema. Con 1-4 o con un clic.',
+    text: 'Está adentro de la isla y es solo de ellos. Eso es on-premise: tu máquina, en tu lugar. Si no da más, nadie te ayuda.',
   },
   {
     speaker: 'MENTOR 🐧',
-    text: 'Y cuando el ataque venga hacia vos, apretá ESPACIO en el momento justo para bloquearlo.',
+    text: 'Y ya no da más. Tan vieja que nadie sabe arreglarla y no puede crecer ni un poco. Una máquina así es un legacy.',
   },
   {
     speaker: 'MENTOR 🐧',
-    text: 'Mientras más preciso el bloqueo, más se carga tu especial. Cuando se llene, lo terminás. ¡Andá!',
+    text: 'La gente se fue. A mí Amazon me mandó a una isla como esta hace años. Hoy te toca a vos.',
+  },
+  // Esta era la línea 2 del guion viejo y se mantiene intacta: presenta la estructura
+  // tutorial -> revancha sin nombrar una sola mecánica. No la toques.
+  {
+    speaker: 'MENTOR 🐧',
+    text: 'No lo vas a vencer a golpes. Vení, que te lo muestro una vez... y después te la arreglás.',
   },
 ]
