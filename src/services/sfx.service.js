@@ -63,6 +63,25 @@ export const sfxService = {
   },
   fire: () => beep(300, 0.35, 'sawtooth', 0.07, -180),
   reflect: () => beep(520, 0.15, 'square', 0.07, 400),
+  // Parry del combo. El tono SUBE con la cadena: el tercer parry suena más alto que el
+  // primero, y eso es lo que hace que una cadena de tres se sienta como una cadena y no como
+  // tres bloqueos sueltos. `step` es 0-based y se acota acá para que nadie mande el
+  // oscilador arriba del rango audible por pasarle un índice grande.
+  parry: (step = 0) => {
+    const rung = Math.min(4, Math.max(0, step))
+    beep(560 + rung * 130, 0.13, 'square', 0.07, 320)
+  },
+  // Parry sin escudo (carta equivocada): frena el golpe, pero suena SORDO y hacia abajo. Es
+  // la señal de "no devolviste nada" sin necesidad de un cartel.
+  parryBlank: () => beep(260, 0.14, 'square', 0.05, -110),
+  // Contraataque: los tres reflejos convergiendo. Tres tonos en escalera y un golpe abajo,
+  // que es lo único del juego que suena así.
+  counter: () => {
+    beep(660, 0.09, 'square', 0.07)
+    setTimeout(() => beep(880, 0.09, 'square', 0.07), 60)
+    setTimeout(() => beep(1320, 0.16, 'square', 0.08, 260), 120)
+    setTimeout(() => beep(90, 0.3, 'sawtooth', 0.09, -30), 180)
+  },
   // Carga del remate: un solo tono que sube durante toda la carga. Es la única señal de
   // audio LARGA del juego, y eso es a propósito — avisa que lo que viene no es una ronda
   // más. Dura lo mismo que FINISHER.CHARGE_DURATION; si tuneás una, tuneá la otra.

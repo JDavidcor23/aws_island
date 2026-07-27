@@ -1,4 +1,5 @@
 import { COMBAT_PACING } from './COMBAT_PACING'
+import { COMBO } from './COMBO'
 
 // Fases de combate. Es un eje ORTOGONAL a GAME_STATES: la fase no dice qué
 // pantalla se muestra, dice cómo se comporta la pantalla que se está mostrando.
@@ -34,6 +35,15 @@ export const PHASE_CONFIG = {
     specialTriggersFinisher: false, // el tutorial termina por rondas, no por especial
     bossHpMirrorsSpecial: false,    // en el tutorial la barra del jefe cuenta problemas
     atkSpeedMult: 1,
+    // --- combo de parries ---
+    comboLength: COMBO.LENGTH,      // tres golpes por problema, en las dos fases
+    // ⚠️ Escala el RITMO del combo (las pausas del patrón), NO la velocidad del orbe: eso
+    // ya lo hace atkSpeedMult. Si los dos escalaran lo mismo, la revancha correría a
+    // 1.35 × 1.35 = 1.82 y el combo sería injugable.
+    comboSpeedMult: 1,
+    // En el tutorial la carta equivocada no lanza nada: se descarta y podés reintentar,
+    // que es cómo se aprende a descartar. Ver la nota de wrongCardStartsCombo en REMATCH.
+    wrongCardStartsCombo: false,
   },
   [PHASES.REMATCH]: {
     // El límite sale de COMBAT_PACING y no de un número acá: era el MISMO concepto
@@ -63,5 +73,19 @@ export const PHASE_CONFIG = {
     specialTriggersFinisher: true,
     bossHpMirrorsSpecial: true,     // en la revancha el especial ES la vida del jefe
     atkSpeedMult: 1.35,
+    // --- combo de parries ---
+    comboLength: COMBO.LENGTH,
+    // Las pausas del patrón se acortan un 35%: el mismo ritmo, apretado. La velocidad del
+    // orbe la sigue escalando atkSpeedMult, no esto.
+    comboSpeedMult: 1.35,
+    // La carta equivocada LANZA el combo, sin escudo: los parries frenan el golpe pero no
+    // reflejan ni cargan la barra.
+    //
+    // ⚠️ Esto elimina el reintento que daba G.wrong en la revancha: antes elegir mal te
+    // costaba un corazón y te dejaba probar otra carta en el mismo problema. Ahora una
+    // carta mal elegida compromete el turno entero. Es consecuencia directa de la tabla de
+    // resultados del combo —si el turno se puede reintentar, la tabla no significa nada— y
+    // poner este flag en false lo devuelve al comportamiento anterior con una línea.
+    wrongCardStartsCombo: true,
   },
 }

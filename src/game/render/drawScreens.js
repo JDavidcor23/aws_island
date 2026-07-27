@@ -1,9 +1,11 @@
 import { GAME_STATES } from '../../constants/GAME_STATES'
 import { LAYOUT } from '../../constants/LAYOUT'
 import { PHASES } from '../../constants/PHASES'
+import { PROBLEM_STAGING } from '../../constants/PROBLEM_STAGING'
 import { UI_TEXTS } from '../../constants/UI_TEXTS'
 import { currentRound } from '../battle/battleLogic'
 import { drawBoss, drawHero } from './drawScene'
+import { drawBossSpeech } from './drawBossSpeech'
 import { drawDialogue } from './drawDialogue'
 import { drawText, drawTextOutlined } from './textHelpers'
 import { drawIntroScene } from './drawIntroScene'
@@ -43,8 +45,12 @@ export const drawProblemScreen = (engine) => {
   const intensity = Math.min(1, G.t * 3)
   ctx.fillStyle = `rgba(255,30,30,${0.18 * intensity * (0.5 + 0.5 * Math.sin(G.time * 6))})`
   ctx.fillRect(0, 0, LAYOUT.W, LAYOUT.H)
-  drawTextOutlined(ctx, '!!', LAYOUT.BOSS.x + 70, LAYOUT.BOSS.y - 100, 26, '#ff5544')
-  drawDialogue(engine, 'LEGACY SERVER', currentRound(G).prob)
+  const { BANG } = PROBLEM_STAGING
+  drawTextOutlined(ctx, BANG.char, LAYOUT.BOSS.x + BANG.dx, LAYOUT.BOSS.y + BANG.dy, BANG.size, BANG.color)
+  // El grito ya no va en la caja de diálogo de abajo: es un bocadillo anclado al jefe que se
+  // tipea acá y SIGUE en pantalla durante CHOOSE (lo dibuja GameEngine.draw). La caja de
+  // abajo duraba medio segundo en la revancha y el problema no se alcanzaba a leer.
+  drawBossSpeech(engine)
 }
 
 export const drawExplainScreen = (engine) => {

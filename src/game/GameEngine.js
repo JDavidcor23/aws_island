@@ -6,17 +6,20 @@ import { TIMING } from '../constants/TIMING'
 import { assetsService } from '../services/assets.service'
 import { musicService } from '../services/music.service'
 import { sfxService } from '../services/sfx.service'
-import { advance, closeCardInfo, confirmCardInfo, endRound, isCardPlayable, needsExplain, nextPlayableIndex, openCardInfo, pickCard, timingPress, updateChooseTimer } from './battle/battleLogic'
+import { advance, closeCardInfo, confirmCardInfo, endRound, isCardPlayable, needsExplain, nextPlayableIndex, openCardInfo, pickCard, updateChooseTimer } from './battle/battleLogic'
+import { registerParry, updateCombo } from './battle/combo'
 import { updateAttack } from './battle/attack'
 import { finisherDone, updateFinisher } from './battle/finisher'
 import { updateIntroScene, skipIntroScene } from './scenes/introScene'
 import { updateBriefing } from './scenes/briefingScene'
+import { shoutReadyToAdvance, updateShout } from './scenes/bossShout'
 import { createEffects } from './fx/effects'
 import { drawBackground, drawBoss, drawHero, drawParticles } from './render/drawScene'
 import { drawHUD } from './render/drawHUD'
 import { cardIndexAt, cardInfoBadgeAt, drawCards, drawChosenCard } from './render/drawCards'
 import { drawCardInfo } from './render/drawCardInfo'
 import { drawAttack } from './render/drawAttack'
+import { drawBossSpeech } from './render/drawBossSpeech'
 import { drawLoadScreen, SCREEN_DRAWERS } from './render/drawScreens'
 
 // Motor del juego: corre con requestAnimationFrame y muta su propio estado.
@@ -89,6 +92,10 @@ const createInitialState = () => ({
   intro: null,
   briefing: null,
   finisher: null,
+  // Combo de parries (game/battle/combo.js) y grito tipeado del jefe
+  // (game/scenes/bossShout.js). Mismo contrato que las tres de arriba.
+  combo: null,
+  shout: null,
 })
 
 export class GameEngine {
@@ -247,7 +254,7 @@ export class GameEngine {
       return
     }
     if (G.state === GAME_STATES.TIMING) {
-      if (key === ' ' || key === 'Enter') timingPress(this)
+      if (key === ' ' || key === 'Enter') registerParry(this)
       return
     }
     if (key === ' ' || key === 'Enter') advance(this)
@@ -284,7 +291,7 @@ export class GameEngine {
         pickCard(this, index)
       }
     } else if (G.state === GAME_STATES.TIMING) {
-      timingPress(this)
+      registerParry(this)
     } else {
       advance(this)
     }
@@ -348,12 +355,22 @@ export class GameEngine {
 
     if (G.state === GAME_STATES.CHOOSE) updateChooseTimer(this)
 
+    // El grito del jefe se revela por dt mientras dura PROBLEM.
+    if (G.state === GAME_STATES.PROBLEM) updateShout(this, dt)
+
+    // El combo de parries: decide cuándo sale cada golpe y cierra la ronda.
+    if (G.state === GAME_STATES.TIMING) updateCombo(this, dt)
+
     // Auto-avance de PROBLEM cuando la fase no pide input: en REMATCH el
     // problema encadena solo, sin ESPACIO. Ya está vivo — beginRematch y reset()
     // son los dos caminos que ponen la fase en REMATCH.
+    //
+    // La condición ya NO es un tiempo fijo: es "el grito terminó de revelarse". Con
+    // PROBLEM_MIN_WAIT de 0.5 s la revancha se comía el problema antes de que se leyera —
+    // era la mitad del bug que este feature vino a arreglar.
     if (G.state === GAME_STATES.PROBLEM &&
         !PHASE_CONFIG[G.phase].problemNeedsSpace &&
-        G.t > TIMING.PROBLEM_MIN_WAIT) {
+        shoutReadyToAdvance(G)) {
       this.setState(GAME_STATES.CHOOSE)
     }
 
@@ -398,6 +415,10 @@ export class GameEngine {
     }
 
     if (G.state === GAME_STATES.CHOOSE) {
+      // El bocadillo del jefe SIGUE en pantalla mientras se elige la carta: el problema es
+      // lo que hay que tener a la vista para poder decidir. Va antes de las cartas para que
+      // la franja de foco de drawCards no lo tape.
+      drawBossSpeech(this)
       drawCards(this)
       // El panel NO se dibuja acá: es un modal y va al final de draw(). Ver abajo.
     } else if (G.state === GAME_STATES.TIMING) {

@@ -13,12 +13,16 @@ export const TIMING = {
   GOOD_DIST: 42,
 
   // recompensas de la barra especial (0..100)
-  // 4 bloqueos PERFECT llenan la barra exactamente: la revancha son 4 problemas, así
-  // que jugarla limpia = remate. Con GOOD en 12 hacían falta 9 bloqueos y el jugador
-  // quedaba dando vueltas en rondas extra sin entender qué se esperaba de él.
-  // GOOD en 20 pide 5 bloqueos: alcanzable, y PERFECT sigue siendo estrictamente mejor.
-  // Ninguna combinación llena la barra en menos de 4 rondas (el máximo por ronda es 25),
-  // así que el remate nunca se come contenido del juego.
+  //
+  // ⚠️ SIN USO desde que la economía pasó a ser por COMBO. La recompensa ya no se paga por
+  // golpe: se paga una vez al cerrar la ronda, con la tabla de COMBO.OUTCOMES
+  // (25 / 18 / 10 / 5 / 0). Estas dos constantes quedan acá a propósito y se borran en un
+  // commit aparte: TIMING.js es archivo compartido y meter su limpieza dentro del feature
+  // del combo garantiza un conflicto de merge por una línea que no aporta nada.
+  //
+  // Lo que SÍ se conserva es el invariante que documentaban: el máximo por ronda sigue
+  // siendo 25, así que la barra nunca se llena en menos de 4 rondas y el remate no se come
+  // contenido del juego.
   PERFECT_GAIN: 25,
   GOOD_GAIN: 20,
   SPECIAL_MAX: 100,
