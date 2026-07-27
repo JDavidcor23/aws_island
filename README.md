@@ -310,7 +310,7 @@ la pantalla final para generar curiosidad.
 
 ## Equipo
 
-**Jorge** · **Nicolás** · **Jennifer** · **Osvaldo**
+**Jorge** · **Jennifer** · **Osvaldo**
 
 Arte generado con IA y post-procesado a mano. Hackatón AWS, 2026.
 

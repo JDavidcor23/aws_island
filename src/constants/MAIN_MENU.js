@@ -49,7 +49,7 @@ export const CREDITS = {
     'Equipo: 697',
     'Hackathon KIRO AWS — 2026',
   ],
-  TEAM: ['Jorge', 'Nicolás', 'Jennifer', 'Osvaldo'],
+  TEAM: ['Jorge', 'Jennifer', 'Osvaldo'],
 }
 
 // Los assets se sirven desde public/, así que las rutas empiezan en /assets/...
