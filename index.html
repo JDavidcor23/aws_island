@@ -3,7 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
     <title>Cloud Quest — Isla 0</title>
+    <meta
+      name="description"
+      content="RPG por turnos donde aprendés Cloud Computing peleando. Un novato llega a una isla que se está apagando porque todo dependía de una sola máquina vieja."
+    />
+    <!-- Color de la barra del navegador en mobile. Es el fondo oscuro del juego, así que la
+         barra se funde con el canvas en vez de cortar la pantalla con una franja blanca. -->
+    <meta name="theme-color" content="#0b0b12" />
+
+    <!-- Iconos. Los genera scripts/gen_favicon.sh y los derivan a estos tamaños
+         scripts/make_favicon.py. El .ico va PRIMERO y con sizes="any" porque trae 16, 32 y
+         48 adentro: los navegadores viejos sólo entienden ese, y los nuevos eligen el PNG
+         de abajo si les conviene. -->
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" href="/favicon-32.png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
   </head>
   <body>
     <div id="root"></div>
