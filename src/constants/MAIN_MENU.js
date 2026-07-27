@@ -46,8 +46,8 @@ export const CREDITS = {
   TITLE: 'CRÉDITOS',
   LINES: [
     'Un juego para aprender Cloud Computing jugando.',
-    'Arte: pixel art generado con IA.',
-    'Hackatón AWS — 2026',
+    'Equipo: 697',
+    'Hackathon KIRO AWS — 2026',
   ],
   TEAM: ['Jorge', 'Nicolás', 'Jennifer', 'Osvaldo'],
 }

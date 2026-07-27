@@ -11,7 +11,7 @@
 
 .menu-list__option {
   position: relative;
-  width: min(17.5em, 70vw);
+  width: min(15.5em, 70vw);
   aspect-ratio: 240 / 44;   /* proporción nativa de menu_button.png */
   display: flex;
   align-items: center;
