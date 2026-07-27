@@ -102,7 +102,7 @@
   /* El aire lo pone este margen y no un gap mayor: el subtítulo que iba acá debajo se
      mudó a la placa de nivel, y sin él el logo quedaba pegado a los botones. */
   margin-bottom: 1.1em;
-  width: 47%;
+  width: 40%;
   height: auto;
   image-rendering: pixelated;
 }
