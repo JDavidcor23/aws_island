@@ -93,9 +93,11 @@ const heroOffsetX = (engine) => {
     // El retroceso del disparo. Sólo en FIRE: durante la carga está clavado en el piso.
     return G.finisher?.step === FINISHER_STEPS.FIRE ? -7 : 0
   }
+  // El envión hacia adelante ahora es el CONTRAATAQUE y no un reflejo suelto: con el combo,
+  // el orbe parreado queda retenido sobre el hombro y los tres salen juntos al cerrar.
+  if (G.combo?.counter) return 3
   if (!G.atk) return 0
   if (G.atk.phase === 'windup') return -2    // se planta
-  if (G.atk.phase === 'reflect') return 3    // se tira adelante
   return 0
 }
 

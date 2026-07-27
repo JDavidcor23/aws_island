@@ -59,7 +59,10 @@ export const drawCards = (engine) => {
   ctx.fillStyle = grad
   ctx.fillRect(0, LAYOUT.H - 150, LAYOUT.W, 150)
 
-  drawTextOutlined(ctx, currentRound(G).prob, LAYOUT.W / 2, 26, 13, '#ff9d7a')
+  // La línea del problema que estaba acá —drawTextOutlined(prob, 320, 26, 13)— se fue al
+  // bocadillo del jefe (drawBossSpeech). y=26 es la banda más cargada del canvas: la
+  // compartía con los 4 corazones (y 10..36), "PROBLEMA 1/4" (y 20), esta pregunta (y 48),
+  // LEGACY SERVER (y 58) y la barra del jefe (y 66..78). El problema no se leía.
   drawTextOutlined(ctx, '¿Con qué característica de la nube lo bloqueás?', LAYOUT.W / 2, 48, 11, '#ffffff')
 
   for (let i = 0; i < 4; i++) {
@@ -179,19 +182,25 @@ export const drawCards = (engine) => {
   }
 }
 
-// La carta elegida flota frente al héroe como escudo durante el bloqueo
+// La carta elegida flota frente al héroe como escudo durante el bloqueo.
+// Si la carta era la equivocada (combo sin escudo) flota apagada y SIN halo: el halo cyan es
+// la señal de "esto te protege", y mostrarlo sobre una carta que no neutraliza nada mentiría
+// justo en el momento en que el jugador está aprendiendo qué carta iba.
 export const drawChosenCard = (engine) => {
   const { ctx, IMG, G } = engine
   if (!G.chosen || !IMG[G.chosen]) return
+  const shielded = G.combo ? G.combo.shielded : true
   const bob = Math.sin(G.time * 5) * 2
   const cw = 40
   const ch = 56
   const x = Math.round(LAYOUT.BLOCK.x - cw / 2 + 6)
   const y = Math.round(LAYOUT.BLOCK.y - ch / 2 + bob)
-  if (IMG.glowCyan) {
+  if (shielded && IMG.glowCyan) {
     ctx.globalAlpha = 0.55
     ctx.drawImage(IMG.glowCyan, x + cw / 2 - 44, y + ch / 2 - 44, 88, 88)
     ctx.globalAlpha = 1
   }
+  ctx.globalAlpha = shielded ? 1 : 0.5
   ctx.drawImage(IMG[G.chosen], x, y, cw, ch)
+  ctx.globalAlpha = 1
 }

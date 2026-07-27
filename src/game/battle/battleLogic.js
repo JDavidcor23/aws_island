@@ -8,6 +8,8 @@ import { UI_TEXTS } from '../../constants/UI_TEXTS'
 import { sfxService } from '../../services/sfx.service'
 import { advanceIntroScene } from '../scenes/introScene'
 import { advanceBriefing } from '../scenes/briefingScene'
+import { completeShout, shoutComplete, shoutReadyToAdvance, startShout } from '../scenes/bossShout'
+import { startCombo } from './combo'
 import { startFinisher } from './finisher'
 
 // Reglas del combate: rondas, elección de carta, bloqueo con timing y vida.
@@ -70,7 +72,13 @@ export const startRound = (engine) => {
   G.sel = firstPlayable >= 0 ? firstPlayable : 0
   G.chosen = null
   G.atk = null
+  // El combo es estado POR RONDA: nace en cada startRound y muere acá. startCombo es el
+  // único que lo llena.
+  G.combo = null
   engine.setState(GAME_STATES.PROBLEM)
+  // Después del setState: startShout lee currentRound(G) y el estado tiene que estar ya en
+  // PROBLEM para que el primer frame dibuje el globo vacío y no la caja vieja.
+  startShout(engine)
   G.shake = 8
   sfxService.shout()
 }
@@ -111,7 +119,11 @@ export const updateChooseTimer = (engine) => {
     // Solo llega acá si la fase tiene timer, y esa es REMATCH: no necesita guard
     loseHeart(engine)
     if (G.hearts > 0) {
-      G.atk = { phase: 'hit', t: 0, x: LAYOUT.BOSS.x, y: LAYOUT.BOSS.y, blocked: 'miss', warned: false }
+      // Sin orbe: el jefe no regala un combo por un timeout. Antes se armaba un G.atk en
+      // fase 'hit' que no se dibujaba ni se actualizaba (updateAttack sólo corre en TIMING),
+      // o sea que quedaba colgado en G hasta la ronda siguiente sin hacer nada.
+      G.atk = null
+      G.combo = null
       engine.setState(GAME_STATES.RESOLVE)
     }
   }
@@ -154,76 +166,37 @@ export const pickCard = (engine, index) => {
     sfxService.confirm()
     G.chosen = id
     effects.addFloat(LAYOUT.W / 2, 120, '¡CORRECTO! ¡Prepará el bloqueo!', '#7dff7d', 13)
-    G.atk = { phase: 'windup', t: 0, x: LAYOUT.BOSS.x, y: LAYOUT.BOSS.y, blocked: null, warned: false }
-    engine.setState(GAME_STATES.TIMING)
-  } else {
-    G.wrong.add(id)
-    effects.addFloat(LAYOUT.W / 2, 120, '¡Esa no resuelve ESTE problema!', '#ff8866', 11)
-    // El castigo depende de la fase: en TUTORIAL solo suena el error, no cuesta vida
-    if (cfg.loseHeartOnWrong) loseHeart(engine)
-    else sfxService.wrong()
-  }
-}
-
-export const timingPress = (engine) => {
-  const { G, effects } = engine
-  const atk = G.atk
-  if (!atk) return
-  if (atk.phase === 'windup') {
-    if (!atk.warned) {
-      atk.warned = true
-      effects.addFloat(LAYOUT.BLOCK.x, LAYOUT.BLOCK.y - 40, '¡Todavía no!', '#ffcc88', 10)
-    }
+    // El orbe ya no se arma acá: el combo es el dueño de los golpes y de su ritmo.
+    startCombo(engine, { cardId: id, shielded: true })
     return
   }
-  if (atk.phase !== 'fly' || atk.blocked) return
 
-  const dist = Math.hypot(atk.x - LAYOUT.BLOCK.x, atk.y - LAYOUT.BLOCK.y)
-  let result
-  if (dist <= TIMING.PERFECT_DIST) {
-    result = 'perfect'
-    G.special += TIMING.PERFECT_GAIN
-    G.perfects++
-    sfxService.perfect()
-    engine.flash('#ffe98a', 0.5)
-    effects.addFloat(LAYOUT.BLOCK.x + 20, LAYOUT.BLOCK.y - 46, `¡PERFECT! +${TIMING.PERFECT_GAIN}`, '#ffd94a', 18)
-  } else if (dist <= TIMING.GOOD_DIST) {
-    result = 'good'
-    G.special += TIMING.GOOD_GAIN
-    sfxService.good()
-    effects.addFloat(LAYOUT.BLOCK.x + 20, LAYOUT.BLOCK.y - 46, `GOOD +${TIMING.GOOD_GAIN}`, '#7de0ff', 14)
+  G.wrong.add(id)
+  effects.addFloat(LAYOUT.W / 2, 120, '¡Esa no resuelve ESTE problema!', '#ff8866', 11)
+  // El castigo depende de la fase: en TUTORIAL solo suena el error, no cuesta vida
+  if (cfg.loseHeartOnWrong) {
+    // loseHeart puede haber puesto DEFEAT: sin este corte, el combo arrancaría encima de la
+    // pantalla de derrota.
+    if (!loseHeart(engine)) return
   } else {
-    result = 'miss'
-    sfxService.miss()
-    effects.addFloat(LAYOUT.BLOCK.x + 20, LAYOUT.BLOCK.y - 46, '¡Muy pronto!', '#ff6666', 12)
-  }
-  G.special = Math.min(TIMING.SPECIAL_MAX, G.special)
-  G.lastResult = result
-  atk.blocked = result
-
-  // Aviso de barra llena. Sin esto el remate aparece de la nada al cerrar la ronda y
-  // el jugador nunca entiende que fue ÉL el que lo cargó bloqueando. Se dispara una
-  // sola vez porque endRound remata al terminar esta misma ronda.
-  if (G.special >= TIMING.SPECIAL_MAX && PHASE_CONFIG[G.phase].specialTriggersFinisher) {
-    effects.addFloat(LAYOUT.W / 2, 96, '¡BARRA LLENA — REMATE LISTO!', '#ffe98a', 14)
+    sfxService.wrong()
   }
 
-  if (result !== 'miss') {
-    // bloqueado: el ataque se refleja hacia el jefe
-    sfxService.reflect()
-    G.shake = result === 'perfect' ? 10 : 6
-    effects.emit(LAYOUT.BLOCK.x, LAYOUT.BLOCK.y, result === 'perfect' ? 30 : 16, ['#7de0ff', '#ffffff', '#ffd94a'])
-    const dx = LAYOUT.BOSS.x - atk.x
-    const dy = LAYOUT.BOSS.y - atk.y
-    const len = Math.hypot(dx, dy)
-    atk.phase = 'reflect'
-    atk.vx = (dx / len) * TIMING.REFLECT_SPEED
-    atk.vy = (dy / len) * TIMING.REFLECT_SPEED
-  } else {
-    // demasiado pronto: el ataque sigue y golpea al héroe
-    atk.phase = 'hit'
+  // El golpe viene igual. Podés parrear —el escudo es lo que no tenés—, así que el turno se
+  // juega hasta el final y la carta equivocada compromete la ronda entera.
+  // El tutorial deja esto en false: ahí equivocarse descarta la carta y podés reintentar,
+  // que es cómo se aprende a descartar.
+  if (cfg.wrongCardStartsCombo) {
+    G.chosen = id
+    startCombo(engine, { cardId: id, shielded: false })
   }
 }
+
+// La lectura de la ventana de bloqueo se fue a registerParry (game/battle/combo.js).
+// Vivía acá como timingPress y hacía tres cosas en una: leía la ventana, sumaba especial y
+// sacaba corazones. Con tres parries por problema las dos últimas tenían que salir del
+// golpe y pasar al CIERRE del combo, o la barra se llenaba en dos rondas y una ronda mala
+// costaba tres corazones.
 
 export const openCardInfo = (engine, index) => {
   const { G } = engine
@@ -276,8 +249,14 @@ export const needsExplain = (G) => {
   return G.wrong.size > 0 || G.lastResult === 'miss'
 }
 
-// ¿Hubo error en esta ronda? Carta equivocada, bloqueo fallado o timeout.
-const hadMistake = (G) => G.wrong.size > 0 || G.lastResult === 'miss'
+// ¿Hubo error DE CARTA? Es lo único que la lección flotante puede enseñar.
+//
+// Antes mistakeHint se disparaba con hadMistake, o sea también cuando el jugador había
+// elegido bien y falló el timing. Con el combo eso pasó a ser lo normal —basta con que uno
+// de los tres parries se escape para que lastResult sea 'miss'— y el flotante quedaba
+// diciendo "Era Elasticidad Rápida" arriba de la carta correcta que el jugador acababa de
+// jugar. La lección es sobre la carta; el timing ya lo enseña el resultado del combo.
+const hadCardMistake = (G) => G.wrong.size > 0
 
 // La lección sin el freno: cuando la fase no explica pero el jugador SÍ erró, la respuesta
 // correcta se dice en un texto flotante y el juego encadena igual. Dos datos y nada más,
@@ -308,7 +287,7 @@ export const endRound = (engine) => {
   // `wrong` y `lastResult`, así que después de esa línea ya no hay con qué saber si el
   // jugador erró. Y sólo cuando la fase no explica — si explainOnMistake está en true, la
   // pantalla de EXPLAIN ya dijo todo esto y el flotante sería ruido duplicado.
-  if (!cfg.explainOnMistake && hadMistake(G)) mistakeHint(engine)
+  if (!cfg.explainOnMistake && hadCardMistake(G)) mistakeHint(engine)
 
   // Remate por especial (solo REMATCH — trampa 7: sin el guard el tutorial se gana con 4 perfects)
   if (cfg.specialTriggersFinisher && G.special >= TIMING.SPECIAL_MAX) {
@@ -368,7 +347,15 @@ export const advance = (engine) => {
       advanceBriefing(engine)
       break
     case GAME_STATES.PROBLEM:
-      if (G.t > TIMING.PROBLEM_MIN_WAIT) {
+      // Contrato de dos tiempos, el mismo del briefing: el primer ESPACIO COMPLETA el grito
+      // que se está tipeando, el segundo pasa a elegir carta. Completar en vez de saltear es
+      // lo que hace que el botón nunca se sienta muerto — y garantiza que nadie llegue a las
+      // cartas sin haber visto el problema entero.
+      if (!shoutComplete(G.shout)) {
+        completeShout(engine)
+        return
+      }
+      if (shoutReadyToAdvance(G)) {
         sfxService.confirm()
         engine.setState(GAME_STATES.CHOOSE)
       }

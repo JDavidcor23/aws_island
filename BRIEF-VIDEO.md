@@ -139,7 +139,7 @@ Es el mejor cierre que hay.
 no toca React por frame. Efectos de sonido generados con WebAudio — cero archivos de audio para los
 SFX. Música original en tres pistas que cambian por escena.
 
-**Equipo:** Jorge, Nicolás, Jennifer, Osvaldo.
+**Equipo:** Jorge, Jennifer, Osvaldo.
 
 **Referencias de diseño declaradas:** *Clair Obscur: Expedition 33*, *Mario RPG*, *Paper Mario*.
 
