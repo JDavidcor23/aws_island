@@ -12,11 +12,12 @@
 
 ## El objetivo
 
-Un chico con un suéter de AWS llega a una isla que dependía de un servidor gigante, viejo y oxidado. Ese
-servidor hacía **todo** solo: la luz, el agua, el molino. Y ya no da más. La gente se fue.
+**Un novato llega a una isla que se está apagando.** Todo el pueblo dependía de una sola máquina vieja —la
+luz, el agua, el molino— y esa máquina ya no da más. La gente se fue.
 
-El jugador entra a un combate por turnos contra ese **Legacy Server** y lo vence eligiendo la característica
-de la nube correcta para cada problema que el jefe grita.
+Un pingüino mentor le dice lo único que importa: *no lo vas a vencer a golpes*. El jugador entra a un
+combate por turnos contra ese **Legacy Server** y lo derrota respondiendo cada problema que el jefe grita
+con la característica de la nube que lo resuelve.
 
 > ### La regla de oro del diseño
 > **El aprendizaje es una CONSECUENCIA de la diversión, nunca el precio de entrada.**
@@ -49,7 +50,7 @@ Isla 1. Si dicen *"esto lo jugaría mi sobrino para aprender AWS"*, ganamos.
 <img src="docs/screens/04-briefing.png" alt="El mentor señala al Legacy Server" width="49%">
 </div>
 
-Un pingüino mentor te muestra el pueblo enfermo y te nombra dos palabras: **on-premise** y **legacy**.
+El mentor te muestra el pueblo enfermo y te nombra dos palabras: **on-premise** y **legacy**.
 Ninguna palabra técnica se dice sin algo en pantalla que la sostenga — el molino roto, el agua verde, las
 casas tapiadas. Después te lleva a la arena y te señala contra qué vas a pelear.
 
