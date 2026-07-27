@@ -40,15 +40,38 @@ export const BRIEFING = {
   BOB_AMP: 2,
   BOB_FREQ: 3.2,
 
+  // La caja de diálogo va ARRIBA y no abajo.
+  //
+  // Estaba abajo, para que coincidiera con PROBLEM y EXPLAIN y el jugador ya supiera dónde
+  // mirar cuando arrancara la pelea. Se veía bien en el papel y mal en pantalla: la caja
+  // ocupa y=232..354 y x=128..512, y el mentor está parado en x=152 sobre el piso (y=272..336),
+  // o sea ADENTRO de ese rectángulo. Lo tapaba entero menos un pedacito de bufanda — y el
+  // mentor señalando al jefe es justamente lo que esta pantalla viene a mostrar.
+  //
+  // Arriba no hay conflicto y además el criterio queda mejor: la posición de la caja sigue a
+  // QUIÉN habla, no a la pantalla. Habla el mentor -> arriba, igual que en toda la intro.
+  // Habla el jefe o es combate -> abajo.
+  DIALOGUE_TOP: true,
+
   // Flecha que señala al jefe. Es lo que convierte "mirá allá" en una instrucción: sin
   // algo que apunte, "allá" es todo el cuadro.
   POINTER: {
-    CHAR: '▼',
-    X: LAYOUT.BOSS.x,
-    // Arriba de la cabeza del jefe. El jefe está centrado en BOSS.y (196) con size 192, o
-    // sea que su borde superior cae en 100: 84 lo deja despegado sin salirse del canvas.
-    Y: 84,
-    SIZE: 18,
+    // Apunta desde el COSTADO y no desde arriba, y es '▶' y no '▼'.
+    //
+    // Con la caja de diálogo arriba (y=6..128) y el jefe arrancando en y=100, no queda aire
+    // libre sobre su cabeza. Probado poner el ▼ en y=152 para que cayera debajo de la caja:
+    // aterriza sobre la PANTALLA de la cara del jefe, entre los dos ojos rojos, y ahí deja
+    // de leerse como un indicador y parece un pixel más de su cara.
+    //
+    // Desde la izquierda funciona mejor y además es el gesto correcto: el mentor está
+    // parado a la izquierda del jefe, así que la flecha sale de su lado y apunta a donde
+    // él está mirando.
+    CHAR: '▶',
+    // x=206 queda FUERA de la silueta del jefe (que va de 224 a 416) y despejado del héroe
+    // (que llega a 126). y=205 es la altura de su torso.
+    X: 206,
+    Y: 205,
+    SIZE: 20,
     BOB_AMP: 5,
     BOB_FREQ: 3.4,
     COLOR: '#ffd94a',   // el dorado de "esto es lo importante" que ya usa la carta correcta

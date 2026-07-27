@@ -1,383 +1,323 @@
-# Cloud Quest — Isla 0 🏝️
+<div align="center">
 
-**RPG por turnos donde aprendés Cloud Computing (AWS) jugando.** El jefe (Legacy Server) lanza PROBLEMAS;
-los bloqueás eligiendo la característica de la nube correcta y con timing.
+<img src="public/assets/art/_gameready/logo_cloud_quest.png" alt="Cloud Quest" width="420">
 
-**Entrega: lunes 27.** Si es tu primer día en el proyecto, seguí este archivo en orden.
-El diseño completo del juego vive en [CLOUD_QUEST.md](./CLOUD_QUEST.md).
+### RPG por turnos donde aprendés Cloud Computing peleando, no leyendo
 
----
+**Isla 0 — Fundamentos de la Nube** · Hackatón AWS 2026
 
-## 📑 Índice
-
-- [PARTE 1 — Instalar todo](#parte-1--instalar-todo-una-sola-vez-15-min)
-- [PARTE 2 — Correr el proyecto](#parte-2--correr-el-proyecto-5-min)
-- [PARTE 3 — Tu tarea](#parte-3--tu-tarea)
-- [PARTE 4 — Subir tu trabajo](#parte-4--subir-tu-trabajo)
-- [Las 7 reglas](#las-7-reglas-no-negociables)
-- [Si algo no funciona](#si-algo-no-funciona)
-- [Arquitectura (leer antes de codear)](#arquitectura-leer-antes-de-codear)
-
-> 📋 **Tareas nuevas de ritmo y juice:** [`.kiro/specs/RITMO_Y_JUICE.md`](./.kiro/specs/RITMO_Y_JUICE.md)
-> — límite de 5 segundos para elegir carta, texto que se escribe solo, y por qué la vida del jefe **no** se
-> toca. Dice quién toma cada una y en qué orden.
+</div>
 
 ---
 
-# PARTE 1 — Instalar todo (una sola vez, ~15 min)
+## El objetivo
 
-## Paso 1 · Node.js
+**Un novato llega a una isla que se está apagando.** Todo el pueblo dependía de una sola máquina vieja —la
+luz, el agua, el molino— y esa máquina ya no da más. La gente se fue.
 
-Node es lo que hace correr el proyecto. Sin esto no arranca nada.
+Un pingüino mentor le dice lo único que importa: *no lo vas a vencer a golpes*. El jugador entra a un
+combate por turnos contra ese **Legacy Server** y lo derrota respondiendo cada problema que el jefe grita
+con la característica de la nube que lo resuelve.
 
-1. Andá a **https://nodejs.org**
-2. Descargá el botón que dice **LTS** (el de la izquierda, dice algo como "22.x.x LTS").
-   - **Windows:** el `.msi`. Siguiente a todo, no cambies nada.
-   - **Mac:** el `.pkg`. Igual, Siguiente a todo.
-3. **Cerrá y volvé a abrir la terminal.** Importante: si no, no lo va a encontrar.
-4. Verificá:
+> ### La regla de oro del diseño
+> **El aprendizaje es una CONSECUENCIA de la diversión, nunca el precio de entrada.**
 
-```bash
-node --version
-npm --version
-```
+No queremos que el jugador piense *"estoy haciendo un curso de AWS"*. Queremos que piense *"quiero derrotar
+a ese jefe"* — y que al terminar diga *"ahhh, entonces para eso sirve la Elasticidad Rápida"*.
 
-Tenés que ver dos números, tipo `v22.14.0` y `10.9.2`. **El de Node tiene que empezar en 18 o más.**
+| Principio | Qué significa en la práctica |
+|---|---|
+| **Problemas, no conceptos** | El jefe nunca dice "esto es Rapid Elasticity". Grita un PROBLEMA. El jugador descubre el concepto al resolverlo. |
+| **Jugar > leer** | El texto explica en UNA línea, después del golpe. Nunca antes, nunca en párrafos. |
+| **Pulido > cantidad** | Un solo nivel impecable vale más que ocho niveles a medias. |
 
-> **¿Dónde está "la terminal"?**
-> **Windows:** tecla Windows → escribí `powershell` → Enter.
-> **Mac:** Cmd+Espacio → escribí `terminal` → Enter.
-
-## Paso 2 · Git
-
-Git es lo que nos permite trabajar los cuatro sin pisarnos.
-
-1. **https://git-scm.com/downloads** → descargá el de tu sistema → Siguiente a todo.
-2. Cerrá y abrí la terminal. Verificá con `git --version`.
-3. Configurate (con el **mismo mail de tu cuenta de GitHub**):
-
-```bash
-git config --global user.name "Tu Nombre"
-git config --global user.email "tu@mail.com"
-```
-
-## Paso 3 · Editor de código
-
-Si no tenés: **https://code.visualstudio.com** → descargá → Siguiente a todo.
-
-## Paso 4 · Mandá tu usuario de GitHub al grupo
-
-Si no tenés cuenta, creala en **https://github.com/signup**.
-**Mandá tu usuario al grupo de WhatsApp** para que Jorge te agregue al repo. Sin esto no podés subir nada.
+**Criterio de éxito:** el demo gana si, al terminar el nivel, el jurado tiene ganas de ver qué hay en la
+Isla 1. Si dicen *"esto lo jugaría mi sobrino para aprender AWS"*, ganamos.
 
 ---
 
-# PARTE 2 — Correr el proyecto (~5 min)
+## Cómo se ve
 
-Copiá y pegá en la terminal, línea por línea:
+<div align="center">
+<img src="docs/screens/01-menu.png" alt="Menú principal" width="49%">
+<img src="docs/screens/02-intro-barco.png" alt="La llegada en barco" width="49%">
+</div>
+
+**Izquierda:** el menú. **Derecha:** llegás a la isla en un bote que apenas cruzó el océano.
+
+<div align="center">
+<img src="docs/screens/03-intro-mentor.png" alt="El pingüino mentor explica la isla" width="49%">
+<img src="docs/screens/04-briefing.png" alt="El mentor señala al Legacy Server" width="49%">
+</div>
+
+El mentor te muestra el pueblo enfermo y te nombra dos palabras: **on-premise** y **legacy**.
+Ninguna palabra técnica se dice sin algo en pantalla que la sostenga — el molino roto, el agua verde, las
+casas tapiadas. Después te lleva a la arena y te señala contra qué vas a pelear.
+
+<div align="center">
+<img src="docs/screens/05-problema.png" alt="El jefe grita un problema" width="49%">
+<img src="docs/screens/06-elegir-carta.png" alt="Elegir entre las 4 cartas" width="49%">
+</div>
+
+El jefe grita un problema y vos elegís una de cuatro cartas. **Acá está el aprendizaje.**
+
+<div align="center">
+<img src="docs/screens/07-ficha-carta.png" alt="La ficha de la carta" width="70%">
+</div>
+
+Cada carta se explica en tres pasos, y los tres hacen falta: **qué ES** la característica, **por qué**
+resuelve *este* problema, y **qué tipo de ataque bloquea**. En el tutorial leer la ficha es obligatorio: una
+carta que no leíste no se juega, se abre.
+
+<div align="center">
+<img src="docs/screens/08-bloqueo.png" alt="El bloqueo con timing" width="49%">
+<img src="docs/screens/09-remate.png" alt="El remate: la nube responde" width="49%">
+</div>
+
+Al confirmar la carta, el orbe vuela hacia el héroe y hay que apretar en el momento justo. **Acá está la
+diversión.** Cuando la barra especial se llena, se dispara el remate.
+
+<div align="center">
+<img src="docs/screens/10-victoria.png" alt="La isla revive" width="70%">
+</div>
+
+**No lo destruís a golpes:** sus limitaciones no pueden competir con la nube. Volvieron las familias y el
+legacy quedó de adorno.
+
+---
+
+## Los 4 problemas
+
+Son cuatro de las cinco **características esenciales** de la nube según el framework NIST. La quinta
+(*servicio medido*) queda para más adelante.
+
+| El jefe grita | Respuesta correcta | Explicación, después del golpe |
+|---|---|---|
+| *"¡Llegaron 100.000 usuarios de golpe!"* | **Rapid Elasticity** | La nube crece y se achica sola según la demanda. |
+| *"¡Necesitás otro servidor YA!"* | **On-Demand Self-Service** | Aprovisionás recursos vos mismo, sin esperar a nadie. |
+| *"¡Ahora te entran usuarios de todo el mundo!"* | **Broad Network Access** | Se accede desde cualquier lado a través de la red. |
+| *"¡Mil clientes quieren usar la misma máquina!"* | **Resource Pooling** | Muchos clientes comparten la misma infraestructura, seguros y aislados. |
+
+**Carta = aprender. Timing = jugar.** Separados y simples.
+
+## Los sistemas
+
+| Sistema | Diseño |
+|---|---|
+| **Vida** | 4 corazones. Se pierde uno por carta incorrecta o por fallar el timing. |
+| **Timing** | **Perfect** = +25 al especial · **Good** = +20 · **Miss** = perdés un corazón. |
+| **Barra especial** | 0..100. Cuatro bloqueos perfectos la llenan exactamente. |
+| **Dos fases** | **Tutorial:** te marcan la carta correcta, equivocarse no cuesta vida, el mentor explica siempre. **Revancha:** ninguna ayuda, reloj de 15 s para elegir, y el jefe pega 35% más rápido. |
+| **Remate** | El héroe dice *"Encontré una forma mejor"* → la nube responde → el Legacy Server se desintegra. |
+
+> El jefe **no** tiene vida propia como condición de victoria. Cae cuando la barra especial del jugador llega
+> a 100. Su barra de vida es representación visual del progreso, nunca una segunda condición de derrota.
+
+---
+
+## Cómo jugar
+
+| Tecla | Qué hace |
+|---|---|
+| `ESPACIO` / `ENTER` | Avanzar diálogos · **bloquear** el ataque |
+| `1` `2` `3` `4` · flechas `←` `→` · clic | Elegir carta |
+| `I` | Abrir la ficha de la carta |
+| `T` | Saltear la intro |
+| `ESC` | Pausa (reiniciar, volver al menú, volumen) |
+| `M` | Silenciar la música |
+| `R` | Reiniciar |
+
+---
+
+## Correr el proyecto
+
+Necesitás **Node 18 o superior**.
 
 ```bash
 git clone https://github.com/JDavidcor23/aws_island.git
 cd aws_island
-npm install          # tarda 1-2 min, es normal
-npm run dev
+npm install
+npm run dev          # http://localhost:5173
 ```
 
-Vas a ver:
-
-```
-  VITE v6.3.5  ready in 412 ms
-  ➜  Local:   http://localhost:5173/
-```
-
-**Abrí `http://localhost:5173`.** Ahí está el juego.
-
-> El servidor **queda corriendo** en esa terminal. Dejala abierta: cada vez que guardes un archivo, la
-> página se actualiza sola. Para apagarlo, `Ctrl+C`.
-
-## Jugalo completo antes de escribir código
-
-Necesitás saber cómo se siente para no romperlo.
-
-| Tecla | Qué hace |
+| Comando | Qué hace |
 |---|---|
-| `ESPACIO` | Avanzar diálogos · **Bloquear** el ataque |
-| `1` `2` `3` `4`, flechas ← → , o clic | Elegir carta |
-| `R` | Reiniciar |
-
-**Recorrido:** título → `ESPACIO` → el pingüino explica → `ESPACIO` → el jefe grita un problema → elegís la
-carta correcta → esperás que el orbe llegue al círculo frente al héroe y apretás `ESPACIO` → repetís 4 veces
-→ se llena la barra especial → **remate** → la isla revive.
-
-Si llegaste al final, tenés el entorno andando. Ahora sí, tu tarea.
+| `npm run dev` | servidor de desarrollo con recarga en caliente |
+| `npm run build` | build de producción a `dist/` |
+| `npm run preview` | previsualizar el build |
 
 ---
 
-# PARTE 3 — Tu tarea
+## Stack
 
-Cada uno tiene **su rama** y **su spec**. Buscá tu nombre:
-
-| Vos sos | Tu rama | Tu spec | Figura | Paradigma |
-|---|---|---|---|---|
-| **Nicolás** | `feature/nicolas` | [`.kiro/specs/main-menu/`](./.kiro/specs/main-menu/) | **FIG-1** | React + CSS |
-| **Jennifer** | `feature/jennifer` | [`.kiro/specs/boss-health-bar/`](./.kiro/specs/boss-health-bar/) | **FIG-2** | Canvas |
-| **Osvaldo** | `feature/osvaldo` | [`.kiro/specs/intro-tutorial/`](./.kiro/specs/intro-tutorial/) | **FIG-3** | Canvas |
-| **Jorge** | `main` | [`ASSETS.md`](./.kiro/specs/ASSETS.md) → Vercel, arte, integración, video | — | integración |
-
-Tu rama ya está creada en GitHub: hacé `git checkout feature/tunombre` y listo, no tenés que crearla.
-
-> ✅ **No hay nada que esperar.** El motor ya está preparado y el arte ya está hecho. Cada uno hace
-> `git checkout` de su rama y arranca.
-
-## Tu spec tiene 4 archivos. Leelos en este orden:
-
-| # | Archivo | Qué te dice |
+| Decisión | Elección | Por qué |
 |---|---|---|
-| 1 | `requirements.md` | **QUÉ** hay que construir y cuándo está terminado |
-| 2 | `reference.png` | **CÓMO SE VE** — tu FIG, compuesta con los assets reales del juego |
-| 3 | `design.md` | **CÓMO** se construye: archivos exactos, código de ejemplo, trampas |
-| 4 | `tasks.md` | **EN QUÉ ORDEN** — checklist, tachá a medida que avanzás |
+| **Framework** | React 19 + Vite 6 | El equipo ya sabía JS. Cero curva de motor a días de la entrega. |
+| **Render del juego** | Canvas 2D a mano, 640×360 lógicos | Pixel art nítido, control total del timing. |
+| **Estado del juego** | Objeto `G` mutado imperativamente | Un loop de juego no necesita el ciclo de render de React. |
+| **Estado compartido** | Zustand | Solo eventos discretos: pantalla, fase, stats. |
+| **Efectos de sonido** | WebAudio generado en código | Cero archivos, cero latencia de carga. |
+| **Despliegue** | Vercel | Deploy automático desde GitHub en cada push a `main`. |
 
-**Leé los cuatro completos antes de escribir código.** Cada spec tiene una sección de trampas: son errores
-que **no dan mensaje de error**, simplemente algo deja de funcionar y no sabés por qué. Están ahí porque ya
-las revisamos por vos.
+> El diseño original planteaba Godot 4 + S3/CloudFront. Se cambió por plazo y por curva de aprendizaje.
+> **No hay que instalar Godot ni tocar AWS para correr esto.**
 
 ---
 
-## 🧑‍💻 Nicolás — Menú Principal · FIG-1
+## Arquitectura
 
-**Rama:** `feature/nicolas` · **Spec:** [`.kiro/specs/main-menu/`](./.kiro/specs/main-menu/)
+### La regla de oro
 
-Hoy el juego arranca directo en la pantalla de título y lo único que podés hacer es apretar ESPACIO.
-Vas a construir un **menú de verdad**: título, `JUGAR`, `CÓMO SE JUEGA`, `CRÉDITOS`, navegable con las flechas.
+**React es el shell, el motor es JS puro.**
 
-**Es React y CSS puro. No tocás nada del motor del juego.** Es la tarea más aislada de las tres: podés
-trabajar sin miedo a romper el combate.
+El loop corre con `requestAnimationFrame` dentro de `GameEngine` y muta su propio estado (`engine.G`).
+React **nunca** se entera de un frame. El motor notifica solo **eventos discretos**:
 
-```bash
-git checkout feature/nicolas
-git pull
+```
+GameEngine.setState(state)
+  └─ onScreenChange(screen, stats, phase)
+       └─ useGameCanvas.hook.js  →  useGameStore
+            └─ cualquier hook de React  →  useGameStore((s) => s.phase)
 ```
 
-- **Creás:** `src/components/MainMenu/` · `src/constants/MAIN_MENU.js`
-- **Compartido que tocás:** solo `src/App.jsx` (3 líneas)
+> **Prohibido** meter `setState` de React o updates del store dentro del loop del juego. Eso mata el
+> rendimiento y es el error más grave que se puede cometer en este codebase.
 
----
+Si venís de React "normal", esto es lo que más confunde: **no hay componentes que se re-rendericen cuando el
+jugador juega.** Hay un `<canvas>` y un objeto `G` que se modifica directamente.
 
-## 🧑‍💻 Jennifer — Barra de Vida del Jefe · FIG-2
+### Rendimiento del canvas
 
-**Rama:** `feature/jennifer` · **Spec:** [`.kiro/specs/boss-health-bar/`](./.kiro/specs/boss-health-bar/)
+`shadowBlur` y `ctx.filter` **por frame están prohibidos** — son los que hacían sentir lento el prototipo.
+Todo glow o flash se pre-renderiza **una sola vez** en `assets.service.js` y en el loop solo se hace
+`drawImage`. Y las coordenadas se redondean siempre con `Math.round()`: es pixel art, media unidad de píxel
+deja bordes borrosos.
 
-Hoy el jefe recibe golpes y **nada cambia en pantalla**, así que el combate no se siente como que estás
-ganando. Vas a agregarle una **barra de vida sobre la cabeza** que baja un cuarto cada vez que el jugador
-resuelve un problema.
-
-**Esto se dibuja en canvas**, no con HTML. Suena raro pero es más simple: son rectángulos y texto. El spec
-te lleva de la mano paso a paso.
-
-⚠️ **Ojo:** el jefe **NO muere por tu barra**. Muere cuando la barra especial del jugador se llena y se
-dispara el remate. Tu barra muestra *progreso del combate*, y **no vas a tocar la lógica de combate**.
-El `requirements.md` explica por qué — leelo, no lo saltees.
-
-```bash
-git checkout feature/jennifer
-git pull
-```
-
-- **Creás:** `src/game/render/drawBossHealth.js` · `src/constants/BOSS_HEALTH.js`
-- **Compartido que tocás:** solo `src/game/render/drawHUD.js` (2 líneas)
-
----
-
-## 🧑‍💻 Osvaldo — Escena de Tutorial · FIG-3
-
-**Rama:** `feature/osvaldo` · **Spec:** [`.kiro/specs/intro-tutorial/`](./.kiro/specs/intro-tutorial/)
-📌 **Empezá por su [README](./.kiro/specs/intro-tutorial/README.md)** — hay **tareas nuevas** y el fondo cambió.
-
-Hoy el jugador aprende las mecánicas **perdiendo corazones**. Para un jurado con 5 minutos, eso es fatal.
-
-Vas a construir una **escena caminable propia**, antes del combate: el héroe entra caminando por la isla
-oxidada, se encuentra con el pingüino mentor, el pingüino le explica las tres mecánicas en diálogo, y después
-el héroe sigue caminando hacia el servidor. Recién ahí arranca la pelea.
-
-**Es canvas, no HTML** — sprites, ciclo de caminata de 6 frames y una línea de piso. Y es la tarea más
-acoplada de las tres: engancha en 4 lugares del motor. El spec te da los 4 diffs exactos.
-
-> ✅ **Entregado el 25/07** (commit `1de9279`), revisado y verificado integrado. No hay nada que arreglar.
-> ⚠️ Pero el fondo `A-1` **se regeneró**: hacé `git merge origin/main`. Tu `GROUND_Y = 295` sigue bien.
-> 📋 Y tenés dos tareas nuevas en [`RITMO_Y_JUICE.md`](./.kiro/specs/RITMO_Y_JUICE.md).
-
-```bash
-git checkout feature/osvaldo
-git pull
-```
-
-- **Creás:** `src/game/scenes/introScene.js` · `src/game/render/drawIntroScene.js` · `src/constants/INTRO_SCENE.js`
-- **Compartido que tocás:** `GameEngine.js`, `battleLogic.js`, `drawScreens.js` y `ASSETS_MANIFEST.js` — un par de líneas en cada uno, y ninguno de los otros dos los toca
-
----
-
-# PARTE 4 — Subir tu trabajo
-
-Hacé esto **varias veces al día**, no una sola vez al final. Si guardás todo para el domingo y algo sale
-mal, no hay tiempo de arreglarlo.
-
-```bash
-git status                                       # ¿qué cambié?
-git add .                                        # agregar mis cambios
-git commit -m "feat: navegación por teclado en el menú"
-git push origin feature/nicolas                # ← poné TU rama
-```
-
-La primera vez que hagas `push` te va a pedir usuario y contraseña. Si te rechaza la contraseña, es porque
-GitHub ya no las acepta: avisá en el grupo y te pasamos cómo generar un token.
-
-**Mensajes de commit:** `feat:` algo nuevo · `fix:` un arreglo · `style:` CSS.
-
-## Cuando avisen que hay arte nuevo
-
-El arte lo genera **Jorge** y lo sube a `main`. **Nadie se pasa imágenes por WhatsApp.**
-Cuando avise en el grupo, traelas a tu rama así:
-
-```bash
-git add . && git commit -m "wip"   # guardá tu trabajo primero
-git fetch origin
-git merge origin/main              # trae los assets nuevos sin pisar lo tuyo
-```
-
-`git merge origin/main` y no `git pull`: te trae lo de `main` sin tocar tu trabajo.
-
-> ⚠️ Si te aparece un conflicto en un archivo `.png`, **no lo resuelvas vos** — avisá en el grupo.
-> Significa que un asset entró por dos ramas y hay que arreglarlo en `main`.
-
----
-
-# Las 7 reglas (no negociables)
-
-1. **Nunca trabajes en `main`.** Siempre en tu rama. Si escribiste código estando en `main`, avisá antes de tocar nada más.
-2. **Nunca uses `git push --force`.** Nunca. Si se complicó, avisá en el grupo.
-3. **Tocá SOLO los archivos que tu spec lista.** Si necesitás otro, preguntá **antes**.
-4. **Constantes nuevas → tu propio archivo** en `src/constants/`. No agregues nada a `LAYOUT.js` ni a `TIMING.js`: son de todos y garantizan conflictos.
-5. **Cero valores mágicos.** Todo número o texto que signifique algo va a tu archivo de constantes.
-6. **Cero estilos inline** (`style={{...}}`) y **cero `console.log`** en lo que subís. CSS en el `.css` de tu componente. Excepción única: valores calculados, tipo el ancho de una barra.
-7. **Antes de pedir merge:** jugá el juego completo. Si tu cambio deja el combate a medias, se revierte.
-
----
-
-# Si algo no funciona
-
-| Lo que ves | Qué pasa | Cómo se arregla |
-|---|---|---|
-| `node: command not found` / `no se reconoce` | La terminal no encuentra Node | Cerrá y abrí la terminal. Si sigue, reinstalá Node LTS |
-| `npm install` tira errores raros | Instalación a medias | Borrá `node_modules` y `package-lock.json`, corré `npm install` de nuevo |
-| Página en blanco | Error de JavaScript | `F12` → pestaña **Console** → copiá el error rojo al grupo |
-| `Port 5173 is already in use` | Ya lo tenés corriendo en otra terminal | Usá esa, o `Ctrl+C` en la otra |
-| `git push` rechazado | No tenés permiso en el repo | Mandá tu usuario de GitHub al grupo |
-| Guardo un archivo y no pasa nada | El servidor se cayó | Mirá la terminal de `npm run dev`; si murió, corrélo otra vez |
-| El juego se ve borroso | Falta `image-rendering: pixelated` | Está en el spec del menú. En los otros, avisá |
-| El mouse dejó de funcionar en el juego | Un overlay se está comiendo los clics | Te falta `pointer-events: none`. Está en el spec del tutorial |
-
-**Regla de oro del grupo:** si estás trabado más de **20 minutos**, escribí al grupo. No es debilidad, es
-que tenemos 2 días y medio y alguien ya se topó con eso.
-
-## Referencia rápida
-
-```bash
-npm run dev              # levantar el servidor (dejalo corriendo)
-Ctrl+C                   # apagarlo
-git status               # ¿qué cambié?
-git branch               # ¿en qué rama estoy? (el * marca la actual)
-git checkout mi-rama     # cambiar de rama
-git pull                 # traer lo último de GitHub
-git push origin mi-rama  # subir mis cambios
-```
-
----
-
-# Arquitectura (leer antes de codear)
-
-## LA regla de oro
-
-**React es el shell, el motor es JS puro.** El loop del juego corre con `requestAnimationFrame` y muta su
-propio estado (`engine.G`). React **NUNCA** se entera de un frame: el motor notifica solo **eventos
-discretos** (cambio de pantalla o de fase) vía `onScreenChange` → Zustand.
-
-> **PROHIBIDO** meter `setState` o updates del store dentro del loop. Eso mata el rendimiento.
-
-Si venís de React "normal", esto es lo que más te va a confundir: **no hay componentes que se
-re-rendericen cuando el jugador juega.** Hay un `<canvas>` y un objeto `G` que se modifica directamente.
+### Estructura
 
 ```
 src/
-├── App.jsx                          # punto de entrada
-├── components/GameCanvas/           # el canvas + ciclo de vida del motor
-├── pages/BattlePage/                # página del combate (shell React)
-├── stores/useGameStore.store.js     # screen + phase + stats (eventos discretos, NO frames)
+├── App.jsx                       # menú → placa de nivel → partida
+├── components/
+│   ├── GameCanvas/               # el <canvas> + ciclo de vida del motor
+│   ├── MainMenu/  MenuList/  LevelCard/  VolumeControls/
+├── pages/BattlePage/             # shell React del combate
+├── stores/useGameStore.store.js  # screen + phase + stats (eventos discretos, NO frames)
 ├── services/
-│   ├── assets.service.js            # carga sprites + pre-renderiza glows/flashes
-│   └── sfx.service.js               # SFX retro con WebAudio (sin archivos)
-├── constants/                       # TODOS los números y textos del juego
-│   ├── TIMING.js                    # ← tunear dificultad/tempo SOLO acá
-│   ├── ROUNDS.js                    # los 4 problemas del jefe (doc §4)
-│   ├── LAYOUT.js                    # geometría del canvas 640x360
-│   └── CARDS.js · GAME_STATES.js · ASSETS_MANIFEST.js · UI_TEXTS.js
-└── game/
-    ├── GameEngine.js                # loop, input, orquestación update/draw
-    ├── battle/battleLogic.js        # reglas: rondas, cartas, bloqueo, vida
-    ├── battle/attack.js             # física del orbe (windup/fly/reflect/hit)
-    ├── fx/effects.js                # partículas y textos flotantes
-    └── render/                      # dibujo por responsabilidad (escena, HUD, cartas...)
+│   ├── assets.service.js         # carga sprites + pre-renderiza glows/flashes
+│   ├── sfx.service.js            # SFX retro con WebAudio, sin archivos
+│   ├── music.service.js          # música con crossfade
+│   └── audioSettings.service.js  # volumen persistido en localStorage
+├── constants/                    # TODOS los números y textos del juego
+│   ├── TIMING.js                 # ← tunear dificultad y tempo SOLO acá
+│   ├── LAYOUT.js                 # geometría del canvas 640×360
+│   ├── ROUNDS.js  CARDS.js  PHASES.js  BRIEFING.js  INTRO_SCENE.js  ...
+└── game/                         # el motor — JS puro, cero React
+    ├── GameEngine.js             # loop, input, orquestación update/draw
+    ├── battle/                   # battleLogic.js · attack.js · finisher.js
+    ├── scenes/                   # introScene.js · briefingScene.js
+    ├── fx/effects.js             # partículas y textos flotantes
+    └── render/                   # una responsabilidad por archivo
 ```
 
-## El objeto `G` (el estado del juego)
+Cada componente vive en su carpeta con tres archivos: `Componente.jsx` (solo JSX),
+`Componente.css` (sus estilos) y `useComponente.hook.js` (todo el estado, efectos y handlers).
+
+### El objeto `G`
 
 | Campo | Qué es |
 |---|---|
-| `G.state` | fase actual, uno de los 12 `GAME_STATES` |
-| `G.t` | segundos dentro de la fase actual |
-| `G.time` | segundos totales (para blinks y bobbing) |
-| `G.round` | ronda actual, 0-based |
-| `G.hearts` | vida del jugador, 0..4 |
-| `G.special` | barra especial, 0..100 |
-| `G.lastResult` | `'perfect'` · `'good'` · `'miss'` |
-| `G.extraRound` | `true` si el jefe insiste más allá de la ronda 4 |
+| `state` | pantalla actual, uno de los `GAME_STATES` |
+| `phase` | `TUTORIAL` o `REMATCH` — **eje ortogonal** a `state`: no dice qué se muestra, dice cómo se comporta |
+| `t` · `time` | segundos dentro de la fase · segundos totales |
+| `round` · `hearts` · `special` · `perfects` | progreso del combate |
+| `atk` | el orbe en vuelo: `{ phase, t, x, y, blocked }` o `null` |
+| `intro` · `briefing` · `finisher` | sub-máquinas de escena, nacen en `null` |
 
-`G` se recrea entero en `reset()` (cuando el jugador aprieta `R`). Si guardás algo en `G`, se resetea gratis.
+`G` se recrea entero en `reset()` (tecla `R`). Cualquier cosa que guardes ahí se resetea gratis.
 
-## Convenciones del repo
+### Debug
 
-Las reglas completas, con ejemplo incorrecto y correcto de cada una, están en
-[`.kiro/steering/conventions.md`](./.kiro/steering/conventions.md). Resumen:
+En desarrollo el motor queda expuesto en `window.__CLOUD_QUEST__`. Desde la consola del navegador podés
+inspeccionar `__CLOUD_QUEST__.G` en vivo. Las capturas de este README se toman así — ver
+[`scripts/shoot_screens.mjs`](./scripts/shoot_screens.mjs).
 
-Componente = **solo JSX** · lógica en `use*.hook.js` · CSS por componente, sin inline styles · constantes en
-`src/constants/` en UPPER_SNAKE, **archivo propio por feature** · Zustand **con selectores granulares**
-(`useGameStore(s => s.phase)`, nunca destructuring) y consumido **solo desde hooks** · nada de `src/game/`
-importa React · sin `console.log`.
+---
 
-## Steering de Kiro
+## El arte
 
-Este proyecto usa **Kiro** con specs y steering. Kiro lee automáticamente todo lo que está en
-`.kiro/steering/` como contexto del proyecto:
+Pixel art HD, limpio y muy colorido, semi-anime occidental (*Sea of Stars*, *Eastward*). La paleta es cálida
+y saturada en la isla sana; óxido, gris y verde tóxico en la zona del servidor. **El contraste ES la
+narrativa: mundo vivo contra tecnología muerta.**
 
-| Archivo | Qué define |
+El Legacy Server es un CRT oxidado con forma de capitán pirata. **Viejo y obsoleto, no malvado** — esa
+distinción es todo el punto del juego.
+
+Los sprites se generan con el CLI de `codex` y **nunca** se usan crudos:
+
+```
+1. GENERAR     codex exec  →  assets/art/generated/<nombre>.png
+2. PROCESAR    scripts/*.py →  public/assets/art/_gameready/<nombre>.png
+3. REGISTRAR   la clave en src/constants/ASSETS_MANIFEST.js
+```
+
+El paso 2 no es opcional: las imágenes del generador vienen con decenas de miles de colores, gradientes y
+antialiasing disfrazados de pixel art. Medido, una escena salió con **133.786 colores y 485 KB** contra los
+32 colores de los assets originales.
+
+El procedimiento completo, con las seis reglas que costaron corridas perdidas, está en
+[`.kiro/steering/arte.md`](./.kiro/steering/arte.md). El registro de cada asset con su prompt exacto está en
+[`.kiro/specs/ASSETS.md`](./.kiro/specs/ASSETS.md).
+
+---
+
+## Documentación
+
+| Documento | Qué tiene |
 |---|---|
-| [`product.md`](./.kiro/steering/product.md) | qué es el juego, la mecánica, la paleta, el criterio de éxito |
-| [`tech.md`](./.kiro/steering/tech.md) | stack, la regla de oro de la arquitectura, reglas del canvas |
-| [`structure.md`](./.kiro/steering/structure.md) | dónde va cada cosa, naming, regla anti-conflictos |
-| [`conventions.md`](./.kiro/steering/conventions.md) | las 10 reglas de código con ejemplos |
+| [`CLOUD_QUEST.md`](./CLOUD_QUEST.md) | el documento maestro de diseño |
+| [`.kiro/steering/product.md`](./.kiro/steering/product.md) | qué es el juego, la mecánica, la paleta, el criterio de éxito |
+| [`.kiro/steering/tech.md`](./.kiro/steering/tech.md) | stack y las reglas del canvas |
+| [`.kiro/steering/structure.md`](./.kiro/steering/structure.md) | dónde va cada cosa, naming, regla anti-conflictos |
+| [`.kiro/steering/conventions.md`](./.kiro/steering/conventions.md) | las 10 reglas de código, con ejemplo incorrecto y correcto |
+| [`.kiro/steering/arte.md`](./.kiro/steering/arte.md) | cómo se genera y se procesa el arte |
+| [`.kiro/specs/`](./.kiro/specs/) | un feature por carpeta: requisitos, diseño y tareas |
 
-**Si trabajás con Kiro, no le tenés que explicar el proyecto: ya lo sabe.** Abrí tu spec en
-`.kiro/specs/<tu-feature>/` y pedile que ejecute las tareas de `tasks.md`.
+Este proyecto usa **Kiro** con specs y steering: todo lo que está en `.kiro/steering/` se carga como
+contexto del proyecto, así que no hay que explicarle el codebase.
 
-## Regla de rendimiento (canvas)
+---
 
-`shadowBlur` y `ctx.filter` por frame están **PROHIBIDOS** — son los que hacían sentir lento el prototipo.
-Todo glow/flash se pre-renderiza una vez en `assets.service.js` y en el loop solo se hace `drawImage`.
+## Convenciones, en resumen
 
-## Debug
+Componente = **solo JSX** · lógica en `use*.hook.js` · CSS por componente, cero estilos inline · constantes
+en `src/constants/` con **archivo propio por feature** (nunca agregar a `LAYOUT.js` ni `TIMING.js`, son
+compartidos y garantizan conflictos de merge) · Zustand **con selectores granulares**
+(`useGameStore(s => s.phase)`, nunca destructuring) y consumido **solo desde hooks** · nada de `src/game/`
+importa React · cero `console.log` · una rama por feature, nunca commitear a `main` directo.
 
-En desarrollo, el motor queda expuesto en `window.__CLOUD_QUEST__`. Desde la consola del navegador podés
-inspeccionar `__CLOUD_QUEST__.G` para ver el estado en vivo. **Solo para debug, nunca en código que subís.**
+**Overlays sobre el canvas:** cualquier `<div>` absoluto encima del `<canvas>` intercepta todos los clics y
+el juego deja de responder al mouse, **sin dar ningún error en consola**. Es el bug más caro de diagnosticar
+del proyecto. Siempre `pointer-events: none` en el overlay y `auto` solo en lo que debe ser clickeable.
 
-> `prototype/index.html` es el prototipo original en canvas vanilla (backup de demo, se abre con doble clic).
-> **No se desarrolla más ahí.**
+---
+
+## Alcance
+
+**La Isla 0 y nada más**, y dentro de ella un solo combate pulido. El mundo completo — ocho islas: EC2,
+Storage, Load Balancing, Auto Scaling, VPC, IAM, Serverless — es roadmap post-hackatón y solo se insinúa en
+la pantalla final para generar curiosidad.
+
+## Equipo
+
+**Jorge** · **Nicolás** · **Jennifer** · **Osvaldo**
+
+Arte generado con IA y post-procesado a mano. Hackatón AWS, 2026.
+
+<div align="center">
+
+<img src="public/assets/art/_gameready/penguin_talk_1.png" alt="" width="72">
+
+*Amazon te espera en la Isla 1: EC2 — Próximamente*
+
+</div>
