@@ -17,10 +17,12 @@ export const drawBriefing = (engine) => {
   ctx.fillStyle = BRIEFING.VEIL
   ctx.fillRect(0, 0, LAYOUT.W, LAYOUT.H)
 
-  // 2. Flecha sobre el jefe. Sin algo que apunte, "mirá allá" es todo el cuadro.
+  // 2. Flecha que apunta al jefe desde su costado izquierdo. Sin algo que apunte, "mirá
+  // allá" es todo el cuadro. El rebote es HORIZONTAL porque la flecha ahora es '▶': un
+  // indicador que apunta a la derecha y late de arriba abajo se lee raro.
   const pointer = BRIEFING.POINTER
-  const pointerY = pointer.Y + Math.sin(G.time * pointer.BOB_FREQ) * pointer.BOB_AMP
-  drawTextOutlined(ctx, pointer.CHAR, pointer.X, Math.round(pointerY), pointer.SIZE, pointer.COLOR)
+  const pointerX = pointer.X + Math.sin(G.time * pointer.BOB_FREQ) * pointer.BOB_AMP
+  drawTextOutlined(ctx, pointer.CHAR, Math.round(pointerX), pointer.Y, pointer.SIZE, pointer.COLOR)
 
   // 3. El mentor, al lado del héroe y mirando al jefe.
   // penguinTalk1 es el frame con la aleta LEVANTADA: acá no alterna, se queda con ese fijo
@@ -39,14 +41,13 @@ export const drawBriefing = (engine) => {
     )
   }
 
-  // 4. Caja de diálogo ABAJO con typewriter. Abajo y no arriba como la intro: el jefe ocupa
-  // el centro y la franja alta del cuadro, y es lo que esta pantalla viene a mostrar.
-  // Además es la MISMA posición que usan PROBLEM y EXPLAIN, así que el jugador ya sabe
-  // dónde mirar cuando arranca la pelea.
+  // 4. Caja de diálogo ARRIBA con typewriter. Ver el comentario de DIALOGUE_TOP: abajo
+  // tapaba al mentor por completo, que es lo único que esta pantalla tiene para mostrar.
   const line = currentBriefingLine(briefing)
   drawTypedDialogue(engine, {
     speaker: BRIEFING.SPEAKER,
     text: line.text,
     revealedChars: revealedChars(briefing),
+    top: BRIEFING.DIALOGUE_TOP,
   })
 }
