@@ -27,6 +27,7 @@ const createTestEngine = ({ phase = PHASES.REMATCH, ans = 'self', hearts = TIMIN
       t: 0,
       time: 0,
       round: 0,
+      // order mapea ronda -> índice de rounds: con esto el test elige qué problema se juega.
       order: [roundIndexFor(ans), 0, 1, 2],
       level: isla0n1,
       hearts,

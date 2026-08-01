@@ -163,7 +163,6 @@ export const COMBO = {
     },
   },
 
-
   TEXTS: {
     // Un texto por eslabón de la cadena: el parry 3 tiene que sentirse distinto del 1.
     PARRY: ['¡PARRY!', '¡DOS!', '¡Y TRES!'],

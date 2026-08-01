@@ -22,7 +22,25 @@ const assertCoherent = (level) => {
   }
 }
 
-Object.values(LEVELS).forEach(assertCoherent)
+// El nivel entra al estado del motor como `G.level`, y G es un objeto que TODO el motor muta
+// en cada frame. Pero `G.level` NO es una copia: es la misma referencia que vive acá, en el
+// módulo. Una mutación accidental —un `G.level.rounds.push(...)`, un campo pisado por error—
+// contaminaría el contenido para toda la sesión, y como reset() reusa esta misma referencia,
+// ni reiniciar la partida lo recupera.
+//
+// El freeze convierte ese bug silencioso en un TypeError en la línea que lo causa. Los
+// módulos ES corren en modo estricto, así que la asignación tira en vez de fallar callada.
+// Cuesta una pasada al cargar y nada más: el contenido es de sólo lectura por definición.
+const deepFreeze = (value) => {
+  if (value === null || typeof value !== 'object' || Object.isFrozen(value)) return value
+  Object.values(value).forEach(deepFreeze)
+  return Object.freeze(value)
+}
+
+Object.values(LEVELS).forEach((level) => {
+  assertCoherent(level)
+  deepFreeze(level)
+})
 
 export const getLevel = (id) => {
   const level = LEVELS[id]

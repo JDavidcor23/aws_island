@@ -116,7 +116,6 @@ const numberKeyIndex = (key, cardCount) => {
 export class GameEngine {
   constructor(canvas, { onScreenChange, onPauseRequest, initialState, level } = {}) {
     if (!level) throw new Error('GameEngine necesita un level')
-    this.level = level
     this.canvas = canvas
     this.ctx = canvas.getContext('2d')
     this.ctx.imageSmoothingEnabled = false
@@ -177,13 +176,15 @@ export class GameEngine {
     this.G.flashAlpha = alpha
   }
 
-  // reset(): el nivel sobrevive al reset igual que tutorialDone — reiniciar la partida no
-  // cambia de nivel.
   reset() {
     // tutorialDone es el ÚNICO bit que sobrevive al reset: el que ya superó el
     // tutorial no lo vuelve a jugar por apretar R (req 6.2).
     const tutorialDone = this.G.tutorialDone
-    this.G = createInitialState(this.level)
+    // El nivel también sobrevive —reiniciar no cambia de nivel— y se relee de G por la misma
+    // razón que tutorialDone: G es la única fuente. Guardarlo además en `this.level` daba dos
+    // copias del mismo dato, y dos copias es una que se puede desincronizar.
+    const level = this.G.level
+    this.G = createInitialState(level)
     this.effects.clear()
     if (tutorialDone) {
       this.G.tutorialDone = true
