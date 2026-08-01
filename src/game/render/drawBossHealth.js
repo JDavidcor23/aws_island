@@ -1,5 +1,5 @@
 import { GAME_STATES } from '../../constants/GAME_STATES'
-import { PHASE_CONFIG } from '../../constants/PHASES'
+import { phaseConfig } from '../../constants/PHASES'
 import { TIMING } from '../../constants/TIMING'
 import { BOSS_HEALTH, BOSS_HEALTH_VISIBLE_STATES } from '../../constants/BOSS_HEALTH'
 import { drawTextOutlined } from './textHelpers'
@@ -15,7 +15,7 @@ export const drawBossHealth = (engine) => {
 
   // --- Calcular targetHp: lo decide la fase, no la ronda ---
   let targetHp
-  if (PHASE_CONFIG[G.phase].bossHpMirrorsSpecial) {
+  if (phaseConfig(G).bossHpMirrorsSpecial) {
     // En la revancha el especial ES la condición de victoria, así que la barra del jefe
     // tiene que ser su espejo: cada bloqueo bueno le saca vida de verdad y se ve.
     // Contando rondas no funcionaba: las rondas de la revancha ciclan sin límite hasta

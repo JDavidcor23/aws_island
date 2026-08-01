@@ -1,7 +1,7 @@
 import { GAME_STATES } from '../constants/GAME_STATES'
 import { LAYOUT } from '../constants/LAYOUT'
 import { MUSIC } from '../constants/MUSIC'
-import { PHASE_CONFIG, PHASES } from '../constants/PHASES'
+import { phaseConfig, PHASES } from '../constants/PHASES'
 import { TIMING } from '../constants/TIMING'
 import { assetsService } from '../services/assets.service'
 import { musicService } from '../services/music.service'
@@ -237,7 +237,7 @@ export class GameEngine {
       // y confirmar desde él sería una trampa (el segundo ESPACIO de abrirlo jugaría solo).
       // e.repeat es obligatorio: sin él, mantener ESPACIO abre el panel y el auto-repeat
       // lo confirma en el mismo frame — nunca llegarías a leerlo.
-      if ((key === ' ' || key === 'Enter') && !e.repeat && PHASE_CONFIG[G.phase].openInfoOnPick) {
+      if ((key === ' ' || key === 'Enter') && !e.repeat && phaseConfig(G).openInfoOnPick) {
         confirmCardInfo(this)
         return
       }
@@ -245,7 +245,7 @@ export class GameEngine {
       // Sin esto, el que elige con el teclado apretaba '1', se le abría el panel, apretaba
       // '1' otra vez y el panel se comía la tecla sin hacer nada.
       const infoIndex = numberKeyIndex(key, G.cards.length)
-      if (infoIndex >= 0 && PHASE_CONFIG[G.phase].openInfoOnPick) {
+      if (infoIndex >= 0 && phaseConfig(G).openInfoOnPick) {
         if (G.cards[infoIndex] === G.infoCard) confirmCardInfo(this)
         else openCardInfo(this, infoIndex)
       }
@@ -300,7 +300,7 @@ export class GameEngine {
     // En el tutorial JUEGA la carta que estás leyendo (el panel es el paso de
     // confirmación); en la revancha solo cierra, como hasta ahora.
     if (G.infoCard) {
-      if (PHASE_CONFIG[G.phase].openInfoOnPick) confirmCardInfo(this)
+      if (phaseConfig(G).openInfoOnPick) confirmCardInfo(this)
       else closeCardInfo(this)
       return
     }
@@ -394,7 +394,7 @@ export class GameEngine {
     // PROBLEM_MIN_WAIT de 0.5 s la revancha se comía el problema antes de que se leyera —
     // era la mitad del bug que este feature vino a arreglar.
     if (G.state === GAME_STATES.PROBLEM &&
-        !PHASE_CONFIG[G.phase].problemNeedsSpace &&
+        !phaseConfig(G).problemNeedsSpace &&
         shoutReadyToAdvance(G)) {
       this.setState(GAME_STATES.CHOOSE)
     }

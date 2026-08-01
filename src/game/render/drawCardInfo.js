@@ -1,7 +1,7 @@
 import { CARD_INFO } from '../../constants/CARD_INFO'
 import { COMBAT_PACING } from '../../constants/COMBAT_PACING'
 import { LAYOUT } from '../../constants/LAYOUT'
-import { PHASE_CONFIG } from '../../constants/PHASES'
+import { phaseConfig } from '../../constants/PHASES'
 import { drawText, wrapText } from './textHelpers'
 
 // Tamaños de fuente y alturas de renglón del panel.
@@ -158,7 +158,7 @@ export const drawCardInfo = (engine) => {
   // El texto cambia según lo que el panel HACE en esta fase. En el tutorial es el paso
   // de confirmación y tiene que decir que desde acá se juega la carta; en la revancha
   // es una consulta que solo se cierra. Un hint fijo mentiría en una de las dos.
-  const hint = PHASE_CONFIG[G.phase].openInfoOnPick ? CARD_INFO.CONFIRM_HINT : CARD_INFO.CLOSE_HINT
+  const hint = phaseConfig(G).openInfoOnPick ? CARD_INFO.CONFIRM_HINT : CARD_INFO.CLOSE_HINT
   const hintY = Math.round(py + h - GAP.hintInside)
   drawText(ctx, hint, cx, hintY, FONT.hint, COLORS.hint, 'center', false)
 
@@ -168,7 +168,7 @@ export const drawCardInfo = (engine) => {
   // Se dibuja fuera del ctx.save/restore del velo para quedar encima de todo.
   // El jugador sigue corriendo contra el reloj mientras lee (req. 5.9),
   // así que tiene que poder verlo aunque el velo tape el arco de drawCards.
-  const limit = PHASE_CONFIG[G.phase].chooseTimeLimit
+  const limit = phaseConfig(G).chooseTimeLimit
   if (limit !== null) {
     const secs = Math.max(0, Math.ceil(limit - G.t))
     const warn = G.t >= (limit - COMBAT_PACING.TIMEOUT_WARN_THRESHOLD)

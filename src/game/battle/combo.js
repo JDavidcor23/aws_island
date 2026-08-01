@@ -1,7 +1,7 @@
 import { COMBO } from '../../constants/COMBO'
 import { GAME_STATES } from '../../constants/GAME_STATES'
 import { LAYOUT } from '../../constants/LAYOUT'
-import { PHASE_CONFIG } from '../../constants/PHASES'
+import { phaseConfig } from '../../constants/PHASES'
 import { TIMING } from '../../constants/TIMING'
 import { sfxService } from '../../services/sfx.service'
 import { currentRound, loseHeart } from './battleLogic'
@@ -73,7 +73,7 @@ const heldSlot = (index) => ({
 // escudo si no (y sólo si la fase lo permite: wrongCardStartsCombo).
 export const startCombo = (engine, { cardId, shielded }) => {
   const { G } = engine
-  const cfg = PHASE_CONFIG[G.phase]
+  const cfg = phaseConfig(G)
   const pattern = G.level.combos[currentRound(G).ans]
   G.atk = null
   G.combo = createCombo({
@@ -362,7 +362,7 @@ export const closeCombo = (engine) => {
   // Aviso de barra llena. Sin esto el remate aparece de la nada al cerrar la ronda y el
   // jugador nunca entiende que fue ÉL el que lo cargó bloqueando. Se dispara una sola vez
   // porque endRound remata al terminar esta misma ronda.
-  if (G.special >= TIMING.SPECIAL_MAX && PHASE_CONFIG[G.phase].specialTriggersFinisher) {
+  if (G.special >= TIMING.SPECIAL_MAX && phaseConfig(G).specialTriggersFinisher) {
     effects.addFloat(LAYOUT.W / 2, 96, COMBO.TEXTS.SPECIAL_FULL, '#ffe98a', 14)
   }
 

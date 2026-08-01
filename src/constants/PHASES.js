@@ -89,3 +89,15 @@ export const PHASE_CONFIG = {
     wrongCardStartsCombo: true,
   },
 }
+
+// El ritmo efectivo de la fase actual. Sale de dos capas:
+//   1. PHASE_CONFIG — el ritmo por defecto, que documenta cada campo y es el del nivel 1.
+//   2. level.pacing[fase] — lo que ese nivel quiera pisar, y NADA más.
+//
+// Es merge y no reemplazo a propósito: un nivel que sólo quiere el timer más corto declara
+// UN campo, no los trece. Copiar los trece para cambiar uno es cómo se desincronizan.
+export const phaseConfig = (G) => {
+  const base = PHASE_CONFIG[G.phase]
+  const override = G.level?.pacing?.[G.phase]
+  return override ? { ...base, ...override } : base
+}

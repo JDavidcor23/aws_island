@@ -1,7 +1,7 @@
 import { CARD_INFO } from '../../constants/CARD_INFO'
 import { COMBAT_PACING } from '../../constants/COMBAT_PACING'
 import { LAYOUT } from '../../constants/LAYOUT'
-import { PHASE_CONFIG } from '../../constants/PHASES'
+import { phaseConfig } from '../../constants/PHASES'
 import { currentRound, isCardLocked } from '../battle/battleLogic'
 import { drawText, drawTextOutlined } from './textHelpers'
 
@@ -76,7 +76,7 @@ export const drawCards = (engine) => {
 
     // Brillo guía: todo el tutorial, solo sobre la carta correcta.
     // Se dibuja ANTES del marco cyan para que la selección quede visible encima.
-    const cfg = PHASE_CONFIG[G.phase]
+    const cfg = phaseConfig(G)
     if (cfg.highlightAnswer && id === currentRound(G).ans) {
       const alpha = 0.45 + 0.45 * Math.sin(G.time * GUIDE_PULSE_SPEED)
       ctx.save()
@@ -152,7 +152,7 @@ export const drawCards = (engine) => {
 
   // Timer visual: arco que se vacía.
   // Se dibuja SOLO si la fase tiene límite de tiempo (null = sin timer, como en TUTORIAL).
-  const limit = PHASE_CONFIG[G.phase].chooseTimeLimit
+  const limit = phaseConfig(G).chooseTimeLimit
   if (limit !== null) {
     const remaining = Math.max(0, 1 - G.t / limit)
     const cx = LAYOUT.W / 2

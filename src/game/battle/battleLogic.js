@@ -1,6 +1,6 @@
 import { GAME_STATES } from '../../constants/GAME_STATES'
 import { LAYOUT } from '../../constants/LAYOUT'
-import { PHASE_CONFIG, PHASES } from '../../constants/PHASES'
+import { phaseConfig, PHASES } from '../../constants/PHASES'
 import { TIMING } from '../../constants/TIMING'
 import { UI_TEXTS } from '../../constants/UI_TEXTS'
 import { sfxService } from '../../services/sfx.service'
@@ -19,7 +19,7 @@ export const currentRound = (G) => G.level.rounds[G.order[G.round % G.level.roun
 // respuesta. Ver la nota de lockWrongCards en PHASE_CONFIG: contradice el diseño original
 // del tutorial a pedido explícito del jugador.
 export const isCardLocked = (G, id) =>
-  PHASE_CONFIG[G.phase].lockWrongCards && id !== currentRound(G).ans
+  phaseConfig(G).lockWrongCards && id !== currentRound(G).ans
 
 // ¿Se puede jugar esta carta? Es el predicado que tienen que compartir el dibujo, el
 // hit-test del mouse, las flechas y pickCard. Con cada uno decidiendo por su cuenta, la
@@ -105,7 +105,7 @@ export const updateChooseTimer = (engine) => {
   const { G, effects } = engine
   if (G.state !== GAME_STATES.CHOOSE) return
   // El límite lo decide la fase, no la ronda: null = sin temporizador (TUTORIAL)
-  const limit = PHASE_CONFIG[G.phase].chooseTimeLimit
+  const limit = phaseConfig(G).chooseTimeLimit
   if (limit === null) return
   if (G.t >= limit) {
     // Timeout: mismo efecto que un Miss — pierde corazón y el ataque entra
@@ -130,7 +130,7 @@ export const updateChooseTimer = (engine) => {
 export const attackSpeed = (G) =>
   // atkSpeedMult escala la velocidad por fase: 1 en TUTORIAL, 1.35 en REMATCH
   (TIMING.ATK_BASE_SPEED + Math.min(G.round, TIMING.ATK_SPEED_MAX_ROUNDS) * TIMING.ATK_SPEED_PER_ROUND) *
-  PHASE_CONFIG[G.phase].atkSpeedMult
+  phaseConfig(G).atkSpeedMult
 
 export const pickCard = (engine, index) => {
   const { G, effects } = engine
@@ -143,7 +143,7 @@ export const pickCard = (engine, index) => {
     openCardInfo(engine, index)
     return
   }
-  const cfg = PHASE_CONFIG[G.phase]
+  const cfg = phaseConfig(G)
 
   // Gate del tutorial: una carta que no leíste no se juega, se ABRE.
   // Vale para las cuatro rondas y también para las cartas equivocadas — que es justo
@@ -241,7 +241,7 @@ export const confirmCardInfo = (engine) => {
 // Antes los dos últimos términos no miraban la fase, así que la revancha frenaba en cada
 // error aunque su config dijera explainAlways: false. Ahora `explainOnMistake` lo gobierna.
 export const needsExplain = (G) => {
-  const cfg = PHASE_CONFIG[G.phase]
+  const cfg = phaseConfig(G)
   if (cfg.explainAlways) return true
   if (!cfg.explainOnMistake) return false
   return G.wrong.size > 0 || G.lastResult === 'miss'
@@ -279,7 +279,7 @@ const mistakeHint = (engine) => {
 // Cierra la ronda: remate por especial, fin del tutorial, o siguiente problema
 export const endRound = (engine) => {
   const { G } = engine
-  const cfg = PHASE_CONFIG[G.phase]
+  const cfg = phaseConfig(G)
 
   // La lección sin el freno. Va ANTES del remate y del startRound: startRound limpia
   // `wrong` y `lastResult`, así que después de esa línea ya no hay con qué saber si el
