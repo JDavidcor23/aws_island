@@ -74,7 +74,7 @@ const heldSlot = (index) => ({
 export const startCombo = (engine, { cardId, shielded }) => {
   const { G } = engine
   const cfg = PHASE_CONFIG[G.phase]
-  const pattern = COMBO.PATTERNS[currentRound(G).ans]
+  const pattern = G.level.combos[currentRound(G).ans]
   G.atk = null
   G.combo = createCombo({
     pattern,

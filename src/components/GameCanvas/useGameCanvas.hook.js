@@ -6,7 +6,7 @@ import { useGameStore } from '../../stores/useGameStore.store'
 
 // Ciclo de vida del motor: se crea al montar, se destruye al desmontar.
 // El motor notifica cambios de pantalla y acá se sincronizan al store.
-export const useGameCanvas = ({ initialState } = {}) => {
+export const useGameCanvas = ({ initialState, level } = {}) => {
   const canvasRef = useRef(null)
   const engineRef = useRef(null)
   const [paused, setPaused] = useState(false)
@@ -20,6 +20,7 @@ export const useGameCanvas = ({ initialState } = {}) => {
 
     const engine = new GameEngine(canvas, {
       initialState,
+      level,
       onScreenChange: (screen, stats, phase) => {
         setScreen(screen)
         setStats(stats)
@@ -50,7 +51,7 @@ export const useGameCanvas = ({ initialState } = {}) => {
       engine.destroy()
       engineRef.current = null
     }
-  }, [setScreen, setStats, setPhase, initialState])
+  }, [setScreen, setStats, setPhase, initialState, level])
 
   // La pausa se aplica en un efecto APARTE. Si `paused` estuviera en las dependencias del
   // efecto de arriba, cada pausa destruiría y recrearía el motor — o sea, pausar

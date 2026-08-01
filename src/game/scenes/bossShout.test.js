@@ -2,12 +2,14 @@ import { describe, expect, it } from 'vitest'
 import { GAME_STATES } from '../../constants/GAME_STATES'
 import { PHASES } from '../../constants/PHASES'
 import { PROBLEM_STAGING } from '../../constants/PROBLEM_STAGING'
-import { ROUNDS } from '../../constants/ROUNDS'
+import { isla0n1 } from '../../content/levels/isla0-n1'
 import { completeShout, shoutComplete, shoutReadyToAdvance, startShout, updateShout } from './bossShout'
 
 // El grito es lo que decide cuándo aparecen las cartas: si el revelado se puede saltear o si
 // `doneAt` se queda en null, o el jugador nunca ve el problema, o la partida se cuelga en
 // PROBLEM para siempre. Las dos cosas son invisibles hasta que pasan.
+
+const ROUNDS = isla0n1.rounds
 
 const createTestEngine = () => ({
   G: {
@@ -17,6 +19,7 @@ const createTestEngine = () => ({
     time: 0,
     round: 0,
     order: [0, 1, 2, 3],
+    level: isla0n1,
     shout: null,
   },
 })

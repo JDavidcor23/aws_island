@@ -163,61 +163,6 @@ export const COMBO = {
     },
   },
 
-  // Un patrón por problema. La clave es el `ans` de ROUNDS (= la clave de CARDS).
-  //
-  // Campos de cada golpe:
-  //   origin  clave de COMBO_ORIGINS
-  //   gap     pausa ANTES de este golpe, en segundos (0 en el primero)
-  //   speed   multiplicador de velocidad del orbe, sobre attackSpeed()
-  //   radius  tamaño del orbe — es la "forma" que diferencia al problema
-  //   offset  corrimiento del punto de salida, para que un enjambre no salga del mismo píxel
-  PATTERNS: {
-    // Elasticidad: oleadas que se ACELERAN, y un tercer golpe que se hace esperar y llega
-    // más rápido que los dos anteriores. Es el problema del pico de carga: el ritmo tiene
-    // que sentirse creciente y traicionero.
-    ela: {
-      icon: 'iconEla',
-      accent: '#ffd94a',
-      hits: [
-        { origin: COMBO_ORIGINS.BOSS, gap: 0, speed: 0.95, radius: 10 },
-        { origin: COMBO_ORIGINS.BOSS, gap: 0.3, speed: 1.2, radius: 11 },
-        { origin: COMBO_ORIGINS.BOSS, gap: 0.85, speed: 1.55, radius: 12 },
-      ],
-    },
-    // Autoservicio: tres golpes mecánicos, ritmo constante, como un trámite que no se
-    // apura. Es el patrón de referencia contra el que se sienten los otros tres.
-    self: {
-      icon: 'iconSelf',
-      accent: '#7de0ff',
-      hits: [
-        { origin: COMBO_ORIGINS.BOSS, gap: 0, speed: 1.05, radius: 10 },
-        { origin: COMBO_ORIGINS.BOSS, gap: 0.45, speed: 1.05, radius: 10 },
-        { origin: COMBO_ORIGINS.BOSS, gap: 0.45, speed: 1.05, radius: 10 },
-      ],
-    },
-    // Acceso por red: tres orígenes distintos. El golpe puede venir de cualquier lado,
-    // igual que los usuarios.
-    net: {
-      icon: 'iconNet',
-      accent: '#9fb6d8',
-      hits: [
-        { origin: COMBO_ORIGINS.BOSS, gap: 0, speed: 1, radius: 10 },
-        { origin: COMBO_ORIGINS.HIGH, gap: 0.5, speed: 1.1, radius: 10 },
-        { origin: COMBO_ORIGINS.LOW, gap: 0.5, speed: 1.1, radius: 10 },
-      ],
-    },
-    // Recursos compartidos: tres orbes CHICOS que salen de puntos distintos del jefe y
-    // convergen en el mismo punto de bloqueo. La multitud sobre una sola máquina.
-    pool: {
-      icon: 'iconPool',
-      accent: '#ff9d7a',
-      hits: [
-        { origin: COMBO_ORIGINS.BOSS, gap: 0, speed: 1.15, radius: 7, offset: { x: -46, y: -28 } },
-        { origin: COMBO_ORIGINS.BOSS, gap: 0.24, speed: 1.15, radius: 7, offset: { x: 46, y: -14 } },
-        { origin: COMBO_ORIGINS.BOSS, gap: 0.24, speed: 1.15, radius: 7, offset: { x: 0, y: 26 } },
-      ],
-    },
-  },
 
   TEXTS: {
     // Un texto por eslabón de la cadena: el parry 3 tiene que sentirse distinto del 1.

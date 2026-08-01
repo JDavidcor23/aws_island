@@ -1,5 +1,4 @@
 import { CARD_INFO } from '../../constants/CARD_INFO'
-import { CARDS } from '../../constants/CARDS'
 import { COMBAT_PACING } from '../../constants/COMBAT_PACING'
 import { LAYOUT } from '../../constants/LAYOUT'
 import { PHASE_CONFIG } from '../../constants/PHASES'
@@ -128,7 +127,7 @@ export const drawCards = (engine) => {
     // lift de selección SÍ se aplica, porque la etiqueta es parte de la carta.
     const labelColor = isUsed ? '#777' : isSelected ? '#ffd94a' : '#ffffff'
     const labelY = y - (isSelected ? SELECTED_LIFT : 0) + h + LAYOUT.CARD.labelGap
-    drawTextOutlined(ctx, CARDS[id].label, cx + w / 2, labelY, 8, labelColor)
+    drawTextOutlined(ctx, G.level.cards[id].label, cx + w / 2, labelY, 8, labelColor)
 
     // Badge '?' — encima de la imagen, atenuado si la carta está descartada.
     // Y del badge: aplica el lift de selección pero NO el bobbing senoidal,

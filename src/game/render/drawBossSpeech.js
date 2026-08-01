@@ -1,4 +1,3 @@
-import { COMBO } from '../../constants/COMBO'
 import { GAME_STATES } from '../../constants/GAME_STATES'
 import { PROBLEM_STAGING } from '../../constants/PROBLEM_STAGING'
 import { currentRound } from '../battle/battleLogic'
@@ -104,7 +103,7 @@ export const drawBossSpeech = (engine) => {
   const { TEXT } = PROBLEM_STAGING
   const lines = wrapText(shout.text, TEXT.wrapChars)
   const box = bubbleBox(lines)
-  const pattern = COMBO.PATTERNS[currentRound(G).ans]
+  const pattern = G.level.combos[currentRound(G).ans]
 
   drawTail(engine, box)
   drawBubble(engine, box)

@@ -62,11 +62,17 @@ const REACT_SCREENS = {
   [GAME_STATES.DEFEAT]: 'DEFEAT',
 }
 
-const createInitialState = () => ({
+const createInitialState = (level) => ({
   state: GAME_STATES.LOAD,
   phase: PHASES.TUTORIAL,
   tutorialDone: false,
-  order: [0, 1, 2, 3],
+  // El nivel es dato de sólo lectura y vive en G porque TODO el motor lo necesita:
+  // battleLogic, combo y los dos drawers de carta. Pasarlo por parámetro a cada función
+  // habría tocado veinte firmas para el mismo efecto.
+  level,
+  // La cantidad de rondas la decide el nivel. Antes era [0,1,2,3] literal, que es la razón
+  // por la que un nivel de 6 problemas habría jugado sólo los primeros 4.
+  order: [...Array(level.rounds.length).keys()],
   infoCard: null,
   infoSeen: new Set(),
   t: 0,
@@ -98,8 +104,19 @@ const createInitialState = () => ({
   shout: null,
 })
 
+// El '4' estaba escrito literal en las dos ramas del teclado. Con niveles de otro tamaño
+// eso deja cartas inalcanzables por teclado — sin error, sin nada: la tecla simplemente no
+// hace nada. Se acota a 9 porque no hay tecla '10'.
+const numberKeyIndex = (key, cardCount) => {
+  if (key < '1' || key > '9') return -1
+  const index = Number(key) - 1
+  return index < cardCount ? index : -1
+}
+
 export class GameEngine {
-  constructor(canvas, { onScreenChange, onPauseRequest, initialState } = {}) {
+  constructor(canvas, { onScreenChange, onPauseRequest, initialState, level } = {}) {
+    if (!level) throw new Error('GameEngine necesita un level')
+    this.level = level
     this.canvas = canvas
     this.ctx = canvas.getContext('2d')
     this.ctx.imageSmoothingEnabled = false
@@ -112,7 +129,7 @@ export class GameEngine {
     // Pantalla en la que arranca el motor. El menú entra directo a INTRO para que
     // el jugador no vea dos pantallas de título seguidas.
     this.initialState = initialState ?? GAME_STATES.TITLE
-    this.G = createInitialState()
+    this.G = createInitialState(level)
     this.IMG = {}
     this.loadErrors = []
     this.effects = createEffects()
@@ -160,11 +177,13 @@ export class GameEngine {
     this.G.flashAlpha = alpha
   }
 
+  // reset(): el nivel sobrevive al reset igual que tutorialDone — reiniciar la partida no
+  // cambia de nivel.
   reset() {
     // tutorialDone es el ÚNICO bit que sobrevive al reset: el que ya superó el
     // tutorial no lo vuelve a jugar por apretar R (req 6.2).
     const tutorialDone = this.G.tutorialDone
-    this.G = createInitialState()
+    this.G = createInitialState(this.level)
     this.effects.clear()
     if (tutorialDone) {
       this.G.tutorialDone = true
@@ -220,10 +239,10 @@ export class GameEngine {
       // 1-4 con el panel abierto: la MISMA carta la confirma, otra carta abre SU ficha.
       // Sin esto, el que elige con el teclado apretaba '1', se le abría el panel, apretaba
       // '1' otra vez y el panel se comía la tecla sin hacer nada.
-      if (key >= '1' && key <= '4' && PHASE_CONFIG[G.phase].openInfoOnPick) {
-        const index = Number(key) - 1
-        if (G.cards[index] === G.infoCard) confirmCardInfo(this)
-        else openCardInfo(this, index)
+      const infoIndex = numberKeyIndex(key, G.cards.length)
+      if (infoIndex >= 0 && PHASE_CONFIG[G.phase].openInfoOnPick) {
+        if (G.cards[infoIndex] === G.infoCard) confirmCardInfo(this)
+        else openCardInfo(this, infoIndex)
       }
       return
     }
@@ -237,8 +256,9 @@ export class GameEngine {
     }
     if (G.state === GAME_STATES.CHOOSE) {
       if (key === 'i' || key === 'I') { openCardInfo(this, G.sel); return }
-      if (key >= '1' && key <= '4') {
-        G.sel = Number(key) - 1
+      const pickIndex = numberKeyIndex(key, G.cards.length)
+      if (pickIndex >= 0) {
+        G.sel = pickIndex
         pickCard(this, G.sel)
       } else if (key === 'ArrowLeft') {
         // Las flechas SALTEAN las cartas no jugables. Si se pararan encima, el jugador

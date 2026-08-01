@@ -1,6 +1,4 @@
 import { GAME_STATES } from '../../constants/GAME_STATES'
-import { ROUNDS } from '../../constants/ROUNDS'
-import { CARDS, CARD_IDS } from '../../constants/CARDS'
 import { LAYOUT } from '../../constants/LAYOUT'
 import { PHASE_CONFIG, PHASES } from '../../constants/PHASES'
 import { TIMING } from '../../constants/TIMING'
@@ -15,7 +13,7 @@ import { startFinisher } from './finisher'
 // Reglas del combate: rondas, elección de carta, bloqueo con timing y vida.
 // Todas las funciones reciben el engine y mutan su estado G (nunca React).
 
-export const currentRound = (G) => ROUNDS[G.order[G.round % ROUNDS.length]]
+export const currentRound = (G) => G.level.rounds[G.order[G.round % G.level.rounds.length]]
 
 // ¿La carta está bloqueada por la fase? Sólo en TUTORIAL, y sólo las que no son la
 // respuesta. Ver la nota de lockWrongCards en PHASE_CONFIG: contradice el diseño original
@@ -63,7 +61,7 @@ export const startRound = (engine) => {
   // releer la misma carta varias veces dentro de una misma ronda: fricción sin nada
   // que enseñar.
   G.infoSeen = new Set()
-  G.cards = shuffle(CARD_IDS)
+  G.cards = shuffle(Object.keys(G.level.cards))
   G.wrong = new Set()
   // La selección arranca en la primera carta JUGABLE y no en el índice 0: con
   // lockWrongCards, el 0 puede caer sobre una carta bloqueada y entonces el ESPACIO no
@@ -265,7 +263,7 @@ const hadCardMistake = (G) => G.wrong.size > 0
 // está escrita como categoría corta antes del guión.
 const mistakeHint = (engine) => {
   const { G, effects } = engine
-  const answer = CARDS[currentRound(G).ans]
+  const answer = G.level.cards[currentRound(G).ans]
   if (!answer) return
   const category = answer.blocks.split('—')[0].trim()
   // y=120 es la línea de mensajes de combate que ya usan pickCard y updateChooseTimer
@@ -298,14 +296,14 @@ export const endRound = (engine) => {
   G.round++
 
   // Tutorial completo: las 4 rondas pasaron
-  if (G.phase === PHASES.TUTORIAL && G.round >= ROUNDS.length) {
+  if (G.phase === PHASES.TUTORIAL && G.round >= G.level.rounds.length) {
     G.tutorialDone = true
     engine.setState(GAME_STATES.TUTORIAL_CLEAR)
     return
   }
 
   // En revancha las rondas siguen cíclicas hasta ganar o perder
-  if (G.round >= ROUNDS.length) G.extraRound = true
+  if (G.round >= G.level.rounds.length) G.extraRound = true
   startRound(engine)
 }
 
@@ -323,7 +321,7 @@ export const beginRematch = (engine) => {
   // Sin esto la barra entra a la revancha con el 25% en el que quedó el tutorial y la
   // primera ronda se ve rellenándose sola, como un glitch.
   G.bossHpDisplay = undefined
-  G.order = shuffle([...Array(ROUNDS.length).keys()])
+  G.order = shuffle([...Array(G.level.rounds.length).keys()])
   startRound(engine)   // startRound es el dueño de infoSeen: no hace falta limpiarlo acá
 }
 

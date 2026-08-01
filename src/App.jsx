@@ -5,6 +5,7 @@ import { MainMenu } from './components/MainMenu/MainMenu'
 import { BattlePage } from './pages/BattlePage/BattlePage'
 
 import { GAME_STATES } from './constants/GAME_STATES'
+import { getLevel } from './content/levels'
 
 // Las tres pantallas de la app. Un enum y no dos booleanos: con `started` + `showingCard`
 // existían cuatro combinaciones y dos no significaban nada.
@@ -37,6 +38,7 @@ export const App = () => {
   return (
     <BattlePage
       initialState={GAME_STATES.INTRO}
+      level={getLevel('isla0-n1')}
       onExitToMenu={exitToMenu}
     />
   )

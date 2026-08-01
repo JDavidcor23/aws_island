@@ -3,8 +3,8 @@ import { COMBO, COMBO_ORIGINS } from '../../constants/COMBO'
 import { GAME_STATES } from '../../constants/GAME_STATES'
 import { LAYOUT } from '../../constants/LAYOUT'
 import { PHASES } from '../../constants/PHASES'
-import { ROUNDS } from '../../constants/ROUNDS'
 import { TIMING } from '../../constants/TIMING'
+import { isla0n1 } from '../../content/levels/isla0-n1'
 import { updateAttack } from './attack'
 import { registerParry, resolveComboOutcome, startCombo, updateCombo } from './combo'
 
@@ -14,6 +14,8 @@ import { registerParry, resolveComboOutcome, startCombo, updateCombo } from './c
 //
 // El motor se reemplaza por un doble mínimo: el combo sólo necesita G, effects, setState y
 // flash. Nada de canvas.
+
+const ROUNDS = isla0n1.rounds
 
 const roundIndexFor = (ans) => ROUNDS.findIndex((round) => round.ans === ans)
 
@@ -25,8 +27,8 @@ const createTestEngine = ({ phase = PHASES.REMATCH, ans = 'self', hearts = TIMIN
       t: 0,
       time: 0,
       round: 0,
-      // order mapea ronda -> índice de ROUNDS: con esto el test elige qué problema se juega.
       order: [roundIndexFor(ans), 0, 1, 2],
+      level: isla0n1,
       hearts,
       special: 0,
       perfects: 0,
@@ -256,7 +258,7 @@ describe('la máquina del combo', () => {
     // La pausa se lee justo después del parry, antes de que ningún frame la descuente.
     playHits(tutorial, ['perfect'])
     playHits(rematch, ['perfect'])
-    const declaredGap = COMBO.PATTERNS.self.hits[1].gap
+    const declaredGap = isla0n1.combos.self.hits[1].gap
     expect(tutorial.G.combo.gap).toBeCloseTo(declaredGap)
     expect(rematch.G.combo.gap).toBeCloseTo(declaredGap / 1.35)
     expect(rematch.G.combo.gap).toBeLessThan(tutorial.G.combo.gap)

@@ -1,5 +1,4 @@
 import { CARD_INFO } from '../../constants/CARD_INFO'
-import { CARDS } from '../../constants/CARDS'
 import { COMBAT_PACING } from '../../constants/COMBAT_PACING'
 import { LAYOUT } from '../../constants/LAYOUT'
 import { PHASE_CONFIG } from '../../constants/PHASES'
@@ -80,7 +79,7 @@ export const drawCardInfo = (engine) => {
 
   // Guarda: sin carta seleccionada no hay nada que dibujar
   if (G.infoCard === null) return
-  const card = CARDS[G.infoCard]
+  const card = G.level.cards[G.infoCard]
   if (!card) return
 
   // Fallback de título: si falta `es`, usamos `label`
