@@ -65,7 +65,14 @@ export const App = () => {
   //   PROBLEM   directo al combate, sin nadie explicando nada. Lo pide el nivel de práctica:
   //             el pingüino ya presentó al Legacy Server y repetirlo le hace perder el
   //             tiempo a quien viene a practicar.
-  const entryState = !progressService.hasSeenIntro(ISLAND0.id)
+  //
+  // La intro pide DOS condiciones, no una: que no se haya visto Y que el nivel sea el primero
+  // de la isla. La segunda no es teórica — se ve apenas alguien entra directo a un nivel
+  // avanzado (con la llave maestra de dev, o el día que se pueda elegir por dónde empezar):
+  // se comía la llegada en barco y el briefing del Legacy Server, con los TRES enemigos del
+  // nivel 2 ya en pantalla y el pingüino presentando a uno solo.
+  const isFirstLevelOfIsland = levelId === ISLAND0.levels[0]
+  const entryState = !progressService.hasSeenIntro(ISLAND0.id) && isFirstLevelOfIsland
     ? GAME_STATES.INTRO
     : level.skipBriefing
       ? GAME_STATES.PROBLEM

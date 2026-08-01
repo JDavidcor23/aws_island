@@ -54,10 +54,28 @@ const write = (value) => {
   }
 }
 
+// Llave maestra de desarrollo: con esto prendido, TODOS los niveles se pueden jugar sin
+// haberlos desbloqueado. Es para probar el nivel 4 sin jugarse los tres anteriores cada vez.
+//
+// Dos candados para que nunca llegue a un jugador real:
+//   1. `import.meta.env.DEV` es false en cualquier build de producción, así que la rama entera
+//      la borra el bundler. No es una comprobación en runtime: el código no existe.
+//   2. Aun en dev hay que prenderla explícitamente. Arranca APAGADA a propósito — si el
+//      default fuera "todo abierto", un bug en el desbloqueo real no se notaría nunca,
+//      que es justamente lo que este flag no tiene que tapar.
+const devUnlockAll = () => {
+  if (!import.meta.env.DEV) return false
+  try {
+    return window.localStorage.getItem(PROGRESS.DEV_UNLOCK_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
 export const progressService = {
   load: () => read(),
   isCompleted: (id) => read().completed.includes(id),
-  isUnlocked: (id) => read().unlocked.includes(id),
+  isUnlocked: (id) => devUnlockAll() || read().unlocked.includes(id),
   hasSeenIntro: (islandId) => read().seenIntros.includes(islandId),
 
   // Marca una intro de isla como vista para que no vuelva a correr en subsiguientes niveles.
@@ -79,4 +97,18 @@ export const progressService = {
   },
 
   reset: () => write({ ...EMPTY }),
+
+  // --- Llave maestra de desarrollo ---
+  // No tocan el progreso: prenden y apagan el bypass de `isUnlocked`. Los expone `main.jsx`
+  // en `window.cq` para poder usarlos desde la consola del navegador sin recompilar.
+  isDevUnlockOn: () => devUnlockAll(),
+
+  setDevUnlock: (on) => {
+    try {
+      if (on) window.localStorage.setItem(PROGRESS.DEV_UNLOCK_KEY, '1')
+      else window.localStorage.removeItem(PROGRESS.DEV_UNLOCK_KEY)
+    } catch {
+      // sin localStorage no hay llave maestra, y no es motivo para romper nada
+    }
+  },
 }
