@@ -112,42 +112,62 @@ export const drawBackground = (engine) => {
   }
 }
 
-export const drawBoss = (engine) => {
+// Opacidad de los enemigos que NO están atacando. Es lo único que separa al que lanza el
+// problema de sus dos compañeros, y por eso es agresiva: con 0.8 los tres se ven iguales y
+// el jugador no sabe de dónde le viene el golpe.
+const INACTIVE_ALPHA = 0.55
+// Desfasaje del bob por posición en la formación. Sin esto los tres suben y bajan en el
+// mismo frame y se leen como un solo objeto de tres cabezas, no como tres enemigos.
+const BOB_PHASE_STEP = 1.7
+
+// Un enemigo de la formación. Todo lo que era `drawBoss` vive acá, pero las coordenadas
+// ahora entran por parámetro: el nivel declara cuántos enemigos hay y dónde.
+//
+// `isActive` gobierna TODO lo que llama la atención — opacidad, temblor, flash y vapor — y
+// no es decoración: con tres enemigos en pantalla, lo único que le dice al jugador contra
+// quién está jugando esta ronda es cuál de los tres está vivo y cuáles dos están apagados.
+const drawEnemy = (engine, enemy, isActive, index) => {
   const { ctx, IMG, G, effects } = engine
-  if (!IMG.boss || G.state === GAME_STATES.VICTORY) return
 
-  const bob = Math.sin(G.time * BOSS_BOB_FREQ) * BOSS_BOB_AMP
-  const size = LAYOUT.BOSS.size
-  let x = LAYOUT.BOSS.x
-  let y = LAYOUT.BOSS.y + bob
-  let alpha = 1
+  const bob = Math.sin(G.time * BOSS_BOB_FREQ + index * BOB_PHASE_STEP) * BOSS_BOB_AMP
+  const size = enemy.size
+  let x = enemy.x
+  let y = enemy.y + bob
+  let alpha = isActive ? 1 : INACTIVE_ALPHA
 
-  if (G.state === GAME_STATES.FINISH_ANIM || G.state === GAME_STATES.FINISH_LINE) {
+  // El remate se lo come el que está atacando. Los otros se quedan quietos: una animación
+  // de remate triple es otro trabajo y no se improvisa acá.
+  if (isActive && (G.state === GAME_STATES.FINISH_ANIM || G.state === GAME_STATES.FINISH_LINE)) {
     const gone = G.bossGone
     x += (Math.random() - 0.5) * 14 * (0.3 + gone)
     y += gone * 46
     alpha = 1 - gone * 0.9
   }
-  if (G.state === GAME_STATES.PROBLEM) {
+  if (isActive && G.state === GAME_STATES.PROBLEM) {
     x += Math.sin(G.t * 40) * Math.max(0, 4 - G.t * 3)
   }
-  if (G.atk && G.atk.phase === 'windup') {
+  if (isActive && G.atk && G.atk.phase === 'windup') {
     x += (Math.random() - 0.5) * 5
   }
 
   const drawX = Math.round(x - size / 2)
   const drawY = Math.round(y - size / 2)
   ctx.globalAlpha = alpha
-  ctx.drawImage(IMG.boss, drawX, drawY, size, size)
-  // flash de daño: sprite blanco encima, alpha según bossHit
-  if (G.bossHit > 0 && IMG.bossWhite) {
+  // El sprite teñido se pre-renderizó en init() (assets.service.makeTintedSprite). Acá sólo
+  // se elige cuál dibujar: componer el tinte por frame es justamente lo que ese pre-render
+  // viene a evitar. Un enemigo sin `tint` cae al sprite original.
+  ctx.drawImage(IMG.tinted?.[enemy.id] ?? IMG.boss, drawX, drawY, size, size)
+
+  // flash de daño: sprite blanco encima, alpha según bossHit. Sólo al que está peleando.
+  if (isActive && G.bossHit > 0 && IMG.bossWhite) {
     ctx.globalAlpha = Math.min(1, G.bossHit * 2.5) * alpha
     ctx.drawImage(IMG.bossWhite, drawX, drawY, size, size)
   }
   ctx.globalAlpha = 1
 
-  // vapor ambiente
-  if (Math.random() < 0.06 && G.state !== GAME_STATES.FINISH_ANIM) {
+  // Vapor ambiente, sólo del activo y a la mitad de densidad que antes: con tres enemigos
+  // emitiendo a 0.06 la pantalla se llena de humo y deja de leerse el combate.
+  if (isActive && Math.random() < 0.03 && G.state !== GAME_STATES.FINISH_ANIM) {
     effects.parts.push({
       x: x + 30 + Math.random() * 40 - 20,
       y: y - 80,
@@ -159,6 +179,25 @@ export const drawBoss = (engine) => {
       size: 5,
     })
   }
+}
+
+// Formación de respaldo: el jefe único de siempre. Existe para que un nivel al que le falte
+// `formation` siga dibujando algo en vez de una arena vacía — un nivel sin enemigos no se ve
+// como un error de datos, se ve como un juego colgado.
+const FALLBACK_FORMATION = [{ id: 'boss', x: LAYOUT.BOSS.x, y: LAYOUT.BOSS.y, size: LAYOUT.BOSS.size }]
+
+export const drawBoss = (engine) => {
+  const { IMG, G } = engine
+  if (!IMG.boss || G.state === GAME_STATES.VICTORY) return
+
+  const formation = G.level?.formation ?? FALLBACK_FORMATION
+  formation.forEach((enemy, index) => {
+    // Sin `activeEnemy` TODOS se dibujan como activos, y eso NO es un caso borde: es el
+    // nivel 1 entero, que tiene un solo enemigo y nunca necesita señalar cuál ataca. Si el
+    // default fuera "inactivo", el jefe del nivel 1 se vería al 55% toda la partida.
+    const isActive = !G.activeEnemy || G.activeEnemy === enemy.id
+    drawEnemy(engine, enemy, isActive, index)
+  })
 }
 
 export const drawHero = (engine) => {

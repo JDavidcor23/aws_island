@@ -4,5 +4,6 @@
 export const ISLAND0 = {
   id: 'island0',
   name: 'Isla 0 — El Pueblo del Servidor',
-  levels: ['isla0-n1'],
+  // El orden importa: es el orden de desbloqueo. Completar uno abre el siguiente.
+  levels: ['isla0-n1', 'isla0-n2'],
 }

@@ -1,7 +1,9 @@
 import { isla0n1 } from './isla0-n1'
+import { isla0n2 } from './isla0-n2'
 
 export const LEVELS = {
   [isla0n1.id]: isla0n1,
+  [isla0n2.id]: isla0n2,
 }
 
 // Un nivel incoherente no falla en la carga: falla a mitad de una ronda, con un

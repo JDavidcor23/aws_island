@@ -73,6 +73,11 @@ export const startRound = (engine) => {
   // El combo es estado POR RONDA: nace en cada startRound y muere acá. startCombo es el
   // único que lo llena.
   G.combo = null
+  // Quién lanza este problema. Rota por ronda para que los tres enemigos ataquen, y con una
+  // formación de uno solo devuelve siempre el mismo — que es el nivel 1 sin cambio alguno.
+  // Lo lee drawBoss para apagar a los que no están atacando: sin esto, tres enemigos
+  // idénticos en pantalla y el jugador sin saber de dónde viene el golpe.
+  G.activeEnemy = G.level.formation?.[G.round % G.level.formation.length]?.id ?? null
   engine.setState(GAME_STATES.PROBLEM)
   // Después del setState: startShout lee currentRound(G) y el estado tiene que estar ya en
   // PROBLEM para que el primer frame dibuje el globo vacío y no la caja vieja.

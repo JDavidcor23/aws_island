@@ -192,9 +192,13 @@ export const isla0n2 = {
 
   pacing: {
     [PHASES.REMATCH]: {
-      // Menos tiempo que la revancha del nivel 1. Es el punto del nivel: el jugador ya sabe
-      // las cuatro cartas, ahora tiene que elegirlas sin pensar.
-      chooseTimeLimit: COMBAT_PACING.CHOOSE_TIME_LIMIT * 0.8,
+      // 8 segundos contra los 15 de la revancha del nivel 1. Es el punto del nivel: el
+      // jugador ya sabe las cuatro cartas, ahora tiene que elegirlas sin pensarlas.
+      //
+      // El 8 no es arbitrario. COMBAT_PACING documenta que 3 segundos no alcanzaban ni para
+      // leer las cuatro cartas, y por eso se abrió a 15. Pero en el nivel 2 el jugador ya no
+      // lee: reconoce. 8 deja tiempo de sobra para quien aprendió y aprieta a quien no.
+      chooseTimeLimit: 8,
       atkSpeedMult: 1.5,
       comboSpeedMult: 1.5,
     },

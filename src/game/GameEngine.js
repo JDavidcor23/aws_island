@@ -6,7 +6,7 @@ import { TIMING } from '../constants/TIMING'
 import { assetsService } from '../services/assets.service'
 import { musicService } from '../services/music.service'
 import { sfxService } from '../services/sfx.service'
-import { advance, closeCardInfo, confirmCardInfo, endRound, isCardPlayable, needsExplain, nextPlayableIndex, openCardInfo, pickCard, updateChooseTimer } from './battle/battleLogic'
+import { advance, closeCardInfo, confirmCardInfo, endRound, isCardPlayable, needsExplain, nextPlayableIndex, openCardInfo, pickCard, startRound, updateChooseTimer } from './battle/battleLogic'
 import { registerParry, updateCombo } from './battle/combo'
 import { updateAttack } from './battle/attack'
 import { finisherDone, updateFinisher } from './battle/finisher'
@@ -65,8 +65,14 @@ const REACT_SCREENS = {
 
 const createInitialState = (level) => ({
   state: GAME_STATES.LOAD,
-  phase: PHASES.TUTORIAL,
-  tutorialDone: false,
+  // La fase de arranque la decide el nivel. El nivel 1 empieza en TUTORIAL —con la carta
+  // correcta marcada y sin reloj— pero un nivel de práctica arranca directo en REMATCH: ahí
+  // no se marca nada, se cobra el error con vida y corre el timer.
+  phase: level.startPhase ?? PHASES.TUTORIAL,
+  // tutorialDone arranca en true cuando el nivel se saltea el tutorial. Si no, endRound
+  // mandaría a TUTORIAL_CLEAR al terminar las rondas —la pantalla de "superaste el
+  // tutorial"— en un nivel que nunca tuvo tutorial.
+  tutorialDone: level.startPhase === PHASES.REMATCH,
   // El nivel es dato de sólo lectura y vive en G porque TODO el motor lo necesita:
   // battleLogic, combo y los dos drawers de carta. Pasarlo por parámetro a cada función
   // habría tocado veinte firmas para el mismo efecto.
@@ -152,7 +158,20 @@ export class GameEngine {
     // Halo blanco: lo usan las volutas de la nube del remate. Con círculos de borde duro
     // la nube se leía como tres pelotas planas pegadas en el cielo.
     this.IMG.glowWhite = assetsService.makeGlowSprite('rgb(255,255,255)', 24)
-    this.setState(this.initialState)
+    // Una copia teñida por enemigo que lo pida. Se hace UNA vez acá, junto con el resto del
+    // pre-render caro, y no en el draw: la formación no cambia durante la partida.
+    this.IMG.tinted = {}
+    if (images.boss) {
+      for (const enemy of this.G.level.formation ?? []) {
+        if (enemy.tint) this.IMG.tinted[enemy.id] = assetsService.makeTintedSprite(images.boss, enemy.tint)
+      }
+    }
+    // Entrar directo al combate NO es un setState más: el único que arma una ronda —cartas,
+    // grito del jefe, combo en null— es startRound, y hasta ahora lo llamaba el final del
+    // briefing. Un nivel que se saltea el briefing y sólo hiciera setState(PROBLEM) entraría
+    // a una arena sin cartas y sin problema: un juego colgado, no un error.
+    if (this.initialState === GAME_STATES.PROBLEM) startRound(this)
+    else this.setState(this.initialState)
     this.lastTs = performance.now()
     this.rafId = requestAnimationFrame(this.frame)
   }

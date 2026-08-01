@@ -11,6 +11,11 @@ export const isla0n1 = {
   mechanic: 'cards',
   concept: '5 características del cloud computing',
 
+  // Un solo jefe, en las coordenadas históricas de LAYOUT.BOSS. Se declara explícito en vez
+  // de dejarlo implícito para que el motor no tenga que saber cuál es el caso "normal":
+  // todos los niveles declaran su formación, tengan uno o tres enemigos.
+  formation: [{ id: 'legacy', x: 320, y: 196, size: 192 }],
+
   rounds: [
     { prob: '¡Llegaron 100.000 usuarios DE GOLPE!', ans: 'ela', expl: 'La nube crece y se achica sola según la demanda.' },
     { prob: '¡Necesitás otro servidor... YA!', ans: 'self', expl: 'Aprovisionás recursos vos mismo, sin esperar a nadie.' },

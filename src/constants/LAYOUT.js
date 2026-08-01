@@ -4,6 +4,15 @@ export const LAYOUT = {
   W: 640,
   H: 360,
   BOSS: { x: 320, y: 196, size: 192 },
+  // Formación de tres enemigos del nivel 2. Son 104 px y no 192 como el jefe único: tres de
+  // 192 son 576 px de ancho en un canvas de 640 y pisarían la fila de cartas (x 188-470).
+  // Van en y=150, arriba de las cartas (y 245) y debajo del bocadillo del problema.
+  // No reemplazan a BOSS — conviven: el nivel 1 sigue usando el jefe grande.
+  TRIO: [
+    { x: 250, y: 150, size: 104 },
+    { x: 390, y: 150, size: 104 },
+    { x: 530, y: 150, size: 104 },
+  ],
   HERO: { x: 78, y: 292, size: 96 },
   // Punto de bloqueo frente al héroe: ahí hay que interceptar el ataque
   BLOCK: { x: 112, y: 276, radius: 26 },

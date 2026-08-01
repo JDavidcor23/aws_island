@@ -12,5 +12,8 @@ export const ISLAND_MAP = {
   BACKGROUND: '/assets/art/_gameready/scene_island_before.png',
   NODES: {
     'isla0-n1': { x: 28, y: 62, label: '1' },
+    // Sobre el camino que sube al servidor, a la derecha del pueblo. Los nodos siguen el
+    // recorrido del dibujo: se avanza hacia la máquina, no en cualquier dirección.
+    'isla0-n2': { x: 58, y: 52, label: '2' },
   },
 }

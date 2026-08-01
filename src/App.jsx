@@ -44,10 +44,6 @@ export const App = () => {
     setScreen(APP_SCREENS.ISLAND_MAP)
   }, [])
 
-  // La intro (barco + mentor + briefing) es de la ISLA y corre UNA vez. El resto de los
-  // niveles entra directo al briefing: el jugador ya sabe dónde está y quién es el pingüino.
-  const firstVisit = !progressService.hasSeenIntro(ISLAND0.id)
-
   if (screen === APP_SCREENS.MENU) return <MainMenu onStart={start} />
 
   // JUGAR no entra directo al juego: pasa por la placa con el nombre de la isla.
@@ -61,10 +57,24 @@ export const App = () => {
   // getLevel(null) tira "nivel desconocido: null" en lugar de un error críptico del motor.
   // El mapa SIEMPRE setea levelId antes de setear screen=PLAYING (en `play`), así que
   // esto no debería ocurrir — pero si ocurre, el error es legible.
+  const level = getLevel(levelId)
+
+  // Por dónde entra el jugador al nivel, de más contexto a menos:
+  //   INTRO     la llegada en barco. Es de la ISLA y corre UNA sola vez, la primera visita.
+  //   BRIEFING  el pingüino señalando al jefe. Para los niveles que presentan algo.
+  //   PROBLEM   directo al combate, sin nadie explicando nada. Lo pide el nivel de práctica:
+  //             el pingüino ya presentó al Legacy Server y repetirlo le hace perder el
+  //             tiempo a quien viene a practicar.
+  const entryState = !progressService.hasSeenIntro(ISLAND0.id)
+    ? GAME_STATES.INTRO
+    : level.skipBriefing
+      ? GAME_STATES.PROBLEM
+      : GAME_STATES.BRIEFING
+
   return (
     <BattlePage
-      initialState={firstVisit ? GAME_STATES.INTRO : GAME_STATES.BRIEFING}
-      level={getLevel(levelId)}
+      initialState={entryState}
+      level={level}
       onExitToMenu={exitToMenu}
       onLevelComplete={() => {
         progressService.markIntroSeen(ISLAND0.id)
