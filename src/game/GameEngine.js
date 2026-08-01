@@ -21,6 +21,7 @@ import { drawCardInfo } from './render/drawCardInfo'
 import { drawAttack } from './render/drawAttack'
 import { drawBossSpeech } from './render/drawBossSpeech'
 import { drawLoadScreen, SCREEN_DRAWERS } from './render/drawScreens'
+import { getMechanic } from './mechanics'
 
 // Motor del juego: corre con requestAnimationFrame y muta su propio estado.
 // NUNCA toca React por frame. Los cambios de pantalla se notifican con
@@ -116,6 +117,9 @@ const numberKeyIndex = (key, cardCount) => {
 export class GameEngine {
   constructor(canvas, { onScreenChange, onPauseRequest, initialState, level } = {}) {
     if (!level) throw new Error('GameEngine necesita un level')
+    // Falla acá y no a mitad de una ronda: un nivel con una mecánica que no existe es un error
+    // de contenido, y el único lugar donde se puede leer como tal es al construir el motor.
+    this.mechanic = getMechanic(level.mechanic)
     this.canvas = canvas
     this.ctx = canvas.getContext('2d')
     this.ctx.imageSmoothingEnabled = false
