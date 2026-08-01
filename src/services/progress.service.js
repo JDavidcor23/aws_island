@@ -9,7 +9,7 @@ import { PROGRESS } from '../constants/PROGRESS'
 // localStorage puede tirar excepción: modo privado de Safari, cookies bloqueadas, cuota
 // llena. Un juego no se cae porque no pudo guardar el progreso — se sigue jugando con el
 // valor en memoria y listo. Misma decisión que audioSettings.service.
-const EMPTY = { completed: [], unlocked: [PROGRESS.FIRST_LEVEL] }
+const EMPTY = { completed: [], unlocked: [PROGRESS.FIRST_LEVEL], seenIntros: [] }
 
 // Cache en memoria: es el fallback cuando localStorage no está, y evita parsear JSON en
 // cada consulta del mapa de isla.
@@ -34,7 +34,10 @@ const read = () => {
     const unlocked = parsed.unlocked.includes(PROGRESS.FIRST_LEVEL)
       ? parsed.unlocked
       : [...parsed.unlocked, PROGRESS.FIRST_LEVEL]
-    cache = { completed: parsed.completed, unlocked }
+    // Migración silenciosa: los guardados de la versión anterior no tienen seenIntros. Tratar
+    // eso como "corrupto" le borraría el progreso a quien ya jugó.
+    const seenIntros = Array.isArray(parsed.seenIntros) ? parsed.seenIntros : []
+    cache = { completed: parsed.completed, unlocked, seenIntros }
     return cache
   } catch {
     cache = { ...EMPTY }
@@ -55,6 +58,14 @@ export const progressService = {
   load: () => read(),
   isCompleted: (id) => read().completed.includes(id),
   isUnlocked: (id) => read().unlocked.includes(id),
+  hasSeenIntro: (islandId) => read().seenIntros.includes(islandId),
+
+  // Marca una intro de isla como vista para que no vuelva a correr en subsiguientes niveles.
+  markIntroSeen: (islandId) => {
+    const current = read()
+    if (current.seenIntros.includes(islandId)) return
+    write({ ...current, seenIntros: [...current.seenIntros, islandId] })
+  },
 
   // Marca un nivel como completado y desbloquea el siguiente. `nextId` puede ser undefined
   // (último nivel de la isla) y entonces sólo marca el completado.
@@ -64,7 +75,7 @@ export const progressService = {
     const unlocked = nextId && !current.unlocked.includes(nextId)
       ? [...current.unlocked, nextId]
       : current.unlocked
-    write({ completed, unlocked })
+    write({ ...current, completed, unlocked })
   },
 
   reset: () => write({ ...EMPTY }),
