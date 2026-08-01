@@ -1,0 +1,155 @@
+/* IslandMap — mapa de selección de nivel dentro de una isla.
+   Misma escala tipográfica que el menú y la LevelCard: font-size atado al ancho del stage
+   para que todo escale proporcionalmente en cualquier viewport.
+   Los colores vienen de la paleta del menú (--cold, --hot, --dim) y de la arena. */
+
+/* --- contenedor raíz --- */
+.island-map {
+  /* Misma fórmula de stage que MainMenu: ocupa exactamente el mismo rectángulo del canvas,
+     así el corte visual entre pantallas no da salto de layout. */
+  --stage-w: min(100vw, calc((100vh - 40px) * 16 / 9));
+  --cold: #7de0ff;
+  --hot: #ffd94a;
+  --dim: #9fb6d8;
+  --done-color: #63c74d;
+  --open-color: #7de0ff;
+  --locked-color: #5c6272;
+  --node-size: 2.6em;
+
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  /* image-rendering pixelated: sin esto el PNG de la isla se ve borroso al escalar.
+     Es la misma razón que .main-menu__background. */
+  image-rendering: pixelated;
+  background-size: cover;
+  background-position: center;
+  /* Fallback por si el PNG no carga */
+  background-color: #0b0b12;
+  overflow: hidden;
+  font-size: calc(var(--stage-w) / 46);
+}
+
+/* --- título --- */
+.island-map__title {
+  position: absolute;
+  top: 4%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  /* letter-spacing empuja el texto a la derecha; padding-left lo recentra exactamente */
+  padding-left: 0.22em;
+  font-size: 1.4em;
+  letter-spacing: 0.22em;
+  color: var(--cold);
+  text-shadow: 0 0.12em 0 rgba(4, 6, 20, 0.9);
+  white-space: nowrap;
+}
+
+/* --- nodos --- */
+/* position: absolute + translate(-50%, -50%): el left/top del CSS apunta al CENTRO del
+   nodo y no a su esquina. Sin el translate, mover un nodo a left:28% lo alinearía por
+   su borde izquierdo y no por su centro visual, desalineándolo del dibujo del mapa. */
+.island-map__node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+
+  /* Círculo de tamaño fijo en em, que a su vez escala con el stage */
+  width: var(--node-size);
+  height: var(--node-size);
+  border-radius: 50%;
+
+  /* Reset de botón */
+  border: 0.16em solid transparent;
+  padding: 0;
+  font-family: inherit;
+  font-size: 1em;
+  font-weight: bold;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* Sombra para que el nodo se lea sobre el fondo de la isla sin importar el color de fondo */
+  box-shadow: 0 0.18em 0.35em rgba(4, 6, 20, 0.7);
+
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.island-map__node:not(:disabled):hover {
+  /* Hover sólo en nodos activos: un "elevación" sutil como los botones del menú */
+  transform: translate(-50%, -54%);
+  box-shadow: 0 0.32em 0.5em rgba(4, 6, 20, 0.85);
+}
+
+/* --- estado: completado --- */
+.island-map__node--done {
+  background: var(--done-color);
+  border-color: #a8f078;
+  color: #0b0b12;
+}
+
+/* --- estado: disponible --- */
+.island-map__node--open {
+  background: var(--open-color);
+  border-color: #b8f0ff;
+  color: #0b0b12;
+  /* Pulso para que el jugador lo vea de un vistazo: si no pulsa, el ojo no sabe
+     dónde mirar en el mapa. */
+  animation: island-map-pulse 1.6s ease-in-out infinite alternate;
+}
+
+@keyframes island-map-pulse {
+  from { box-shadow: 0 0.18em 0.35em rgba(4, 6, 20, 0.7), 0 0 0 0 rgba(125, 224, 255, 0); }
+  to   { box-shadow: 0 0.18em 0.35em rgba(4, 6, 20, 0.7), 0 0 0 0.45em rgba(125, 224, 255, 0); }
+}
+
+/* --- estado: bloqueado --- */
+/* cursor: not-allowed comunica la acción inhabilitada sin depender del color.
+   La opacidad + el ícono de candado en el label cubren el requisito de accesibilidad:
+   un jugador daltónico no puede distinguir gris (#5c6272) de verde apagado, así que
+   no alcanza con el color solo. */
+.island-map__node--locked {
+  background: var(--locked-color);
+  border-color: #7a8099;
+  color: #b0b8cc;
+  cursor: not-allowed;
+  /* La opacidad baja refuerza visualmente el estado desactivado más allá del color */
+  opacity: 0.6;
+}
+
+/* El nodo bloqueado NO recibe hover: disabled ya lo previene en el mouse, pero el CSS
+   selector :not(:disabled):hover lo excluye igualmente */
+
+/* --- botón volver --- */
+.island-map__back {
+  position: absolute;
+  bottom: 4%;
+  left: 4%;
+
+  /* Mismo estilo que menu-panel__back: borde transparente, tipografía del juego,
+     color amarillo de la paleta */
+  border: 0;
+  padding: 0.5em 1.2em;
+  background: rgba(4, 6, 20, 0.6);
+  border-radius: 0.25em;
+  font-family: inherit;
+  font-size: 0.85em;
+  color: var(--hot);
+  cursor: pointer;
+  transition: color 0.12s ease, background 0.12s ease;
+}
+
+.island-map__back:hover {
+  color: #ffffff;
+  background: rgba(4, 6, 20, 0.85);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .island-map__node--open { animation: none; }
+  .island-map__node { transition: none; }
+  .island-map__back { transition: none; }
+}

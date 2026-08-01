@@ -4,8 +4,8 @@ import { useGameCanvas } from './useGameCanvas.hook'
 
 import './GameCanvas.css'
 
-export const GameCanvas = ({ initialState, level, onExitToMenu }) => {
-  const { canvasRef, paused, resume, restart } = useGameCanvas({ initialState, level })
+export const GameCanvas = ({ initialState, level, onExitToMenu, onLevelComplete }) => {
+  const { canvasRef, paused, resume, restart } = useGameCanvas({ initialState, level, onLevelComplete })
 
   return (
     <div className="game-canvas">

@@ -1,4 +1,3 @@
-// src/constants/PROGRESS.js
 export const PROGRESS = {
   STORAGE_KEY: 'cq.progress.v1',
   // El primer nivel arranca desbloqueado siempre: sin esto, un localStorage vacío deja al
